@@ -54,6 +54,23 @@ npm run dev           # port 3000
 
 `.claude/launch.json` configures the preview tool — starts `npm run dev`.
 
+## Auto-deploy rule (important for Claude)
+
+**When the user asks for a code change on this project, you are expected
+to deploy it automatically when the change is complete.** Don't leave
+edits sitting locally waiting for the user to push them.
+
+- After finishing a task that modifies files, run `./deploy.sh "short
+  description of the change"` as the final step.
+- Bundle related edits in one deploy — don't push after every individual
+  `Edit` tool call. Deploy once the user's request is finished.
+- If you're mid-task and debugging, you can hold the deploy until the
+  fix is verified — just don't forget to deploy once it's working.
+- The only reasons to skip the auto-deploy: (a) the user explicitly
+  says "don't push yet", (b) the change is still broken / untested,
+  (c) the change is to something that shouldn't ship (a local-only
+  file, a secret, etc).
+
 ## Making changes
 
 Shortcut script — stages everything, commits, pushes, and prints the
