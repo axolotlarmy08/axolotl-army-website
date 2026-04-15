@@ -6,11 +6,14 @@ import { useCart } from "./CartProvider";
 
 const PORTAL_LINK = "/portal-coming-soon";
 
+// Top-level nav: real pages for content-heavy sections so each one can
+// stand alone for SEO and direct linking. Characters stays a home-page
+// anchor because it's visually core to the brand on the landing page.
 const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Characters", href: "#characters" },
-  { label: "Merch", href: "#merch" },
+  { label: "Features", href: "/features" },
+  { label: "Showreel", href: "/showreel" },
+  { label: "Characters", href: "/#characters" },
+  { label: "Merch", href: "/merch" },
 ];
 
 export default function Nav() {
@@ -37,13 +40,15 @@ export default function Nav() {
               key={link.href}
               href={link.href}
               onClick={(e) => {
-                // If on home page, smooth scroll to section
-                if (window.location.pathname === "/" && link.href.startsWith("#")) {
+                // Smooth-scroll within the home page when the link is an
+                // anchor there (e.g. "/#characters"). Otherwise let the
+                // browser navigate.
+                const isHomeAnchor = link.href.startsWith("/#");
+                if (isHomeAnchor && window.location.pathname === "/") {
                   e.preventDefault();
-                  const el = document.querySelector(link.href);
+                  const el = document.querySelector(link.href.slice(1));
                   if (el) el.scrollIntoView({ behavior: "smooth" });
                 }
-                // If on another page, let the browser navigate to /#section
               }}
               className="text-muted text-sm hover:text-foreground transition-colors"
             >

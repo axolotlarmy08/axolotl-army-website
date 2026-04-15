@@ -134,18 +134,6 @@ export default function Characters() {
             <CharacterCard key={char.name} char={char} delay={i * 0.1} />
           ))}
         </div>
-
-        <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((n) => (
-            <RevealOnScroll
-              key={n}
-              delay={n * 0.05}
-              className="aspect-square rounded-2xl bg-surface border border-border/30 flex items-center justify-center"
-            >
-              <p className="text-muted/30 text-xs">Image {n}</p>
-            </RevealOnScroll>
-          ))}
-        </div>
       </div>
     </section>
   );

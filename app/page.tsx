@@ -1,10 +1,9 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import ScrollAnimation from "@/components/ScrollAnimation";
-import Features from "@/components/Features";
-import HowItWorks from "@/components/HowItWorks";
+import FeatureStrip from "@/components/home/FeatureStrip";
+import ShowreelTeaser from "@/components/home/ShowreelTeaser";
 import Characters from "@/components/Characters";
-import Merch from "@/components/Merch";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
 
@@ -15,10 +14,9 @@ export default function Home() {
       <main>
         <Hero />
         <ScrollAnimation />
-        <Features />
-        <HowItWorks />
+        <FeatureStrip />
+        <ShowreelTeaser />
         <Characters />
-        <Merch />
         <CTA />
       </main>
       <Footer />
