@@ -79,9 +79,11 @@ function ScrollPlaceholder() {
  * dark void a full-viewport sticky creates on narrow screens.
  */
 function MobileVideoAnimation() {
+  const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [progress, setProgress] = useState(0);
 
+  // Track video currentTime → progress for the text-overlay fades.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -94,11 +96,43 @@ function MobileVideoAnimation() {
     return () => video.removeEventListener("timeupdate", onTime);
   }, []);
 
+  // Only play while the section is in view. If the user hasn't scrolled to
+  // it yet, reset currentTime to 0 so the messaging always starts from the
+  // top when they arrive, not mid-sequence.
+  useEffect(() => {
+    const section = sectionRef.current;
+    const video = videoRef.current;
+    if (!section || !video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {
+              // autoplay can be blocked; nothing else we can do here
+            });
+          } else {
+            video.pause();
+            // If the user hasn't yet scrolled past it for the first time,
+            // keep it rewound so they see the full sequence when they arrive.
+            if (entry.boundingClientRect.top > 0) {
+              video.currentTime = 0;
+              setProgress(0);
+            }
+          }
+        }
+      },
+      { threshold: 0.25 }
+    );
+
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <section className="relative w-full scroll-anim-canvas">
+    <section ref={sectionRef} className="relative w-full scroll-anim-canvas">
       <video
         ref={videoRef}
-        autoPlay
         muted
         loop
         playsInline
