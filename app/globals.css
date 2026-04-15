@@ -64,24 +64,24 @@ body {
   );
 }
 
-/* Scroll animation sticky container — vertical fade blends the canvas
-   into the page background on all screen sizes. On mobile, where the frame
-   is contain-scaled and sits in the middle of the viewport, this mask makes
-   the surrounding dark space read as an atmospheric fade rather than empty
-   black bars. */
-.scroll-anim-sticky {
+/* Scroll animation canvas wrapper — vertical fade blends the frame edges
+   into the page background. On mobile the wrapper is aspect-video, so the
+   mask fades the frame's actual top and bottom edges (no hard line against
+   the dark bg). On desktop the wrapper is full viewport and the mask does
+   the same classic top/bottom atmospheric fade. */
+.scroll-anim-canvas {
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    black 25%,
-    black 75%,
+    black 18%,
+    black 82%,
     transparent 100%
   );
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    black 25%,
-    black 75%,
+    black 18%,
+    black 82%,
     transparent 100%
   );
 }

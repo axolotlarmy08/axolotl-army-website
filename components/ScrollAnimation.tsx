@@ -158,12 +158,19 @@ function ActiveScrollAnimation() {
       className="relative"
       style={{ height: `${TOTAL_FRAMES * 28}px` }}
     >
-      <div className="sticky top-0 w-full h-[100dvh] flex items-center justify-center overflow-hidden scroll-anim-sticky">
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full"
-          style={{ filter: "brightness(1.2)" }}
-        />
+      <div className="sticky top-0 w-full h-[100dvh] flex items-center justify-center overflow-hidden">
+        {/* Canvas wrapper sized to the frame (aspect-video on mobile, full
+            viewport on desktop). The fade mask is applied here so the frame
+            edges blend softly into the page background instead of creating
+            a hard line. Absolute so it escapes the flex flow and doesn't
+            push the text overlay off to the side. */}
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full aspect-video sm:inset-0 sm:top-0 sm:translate-y-0 sm:h-full sm:aspect-auto scroll-anim-canvas">
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full"
+            style={{ filter: "brightness(1.2)" }}
+          />
+        </div>
 
         <div className="relative z-10 max-w-[1400px] mx-auto w-full px-6 md:px-12">
           {textOverlays.map((overlay, i) => (
