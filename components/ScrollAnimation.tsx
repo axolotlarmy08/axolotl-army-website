@@ -111,7 +111,9 @@ function ActiveScrollAnimation() {
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
 
-      const scale = Math.max(cw / iw, ch / ih);
+      // On narrow screens, use contain (Math.min) so the whole frame shows
+      // instead of cropping the sides. On desktop, cover (Math.max) fills nicely.
+      const scale = cw < 640 ? Math.min(cw / iw, ch / ih) : Math.max(cw / iw, ch / ih);
       const x = (cw - iw * scale) / 2;
       const y = (ch - ih * scale) / 2;
 
