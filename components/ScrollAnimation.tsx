@@ -111,9 +111,7 @@ function ActiveScrollAnimation() {
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
 
-      // On narrow screens, use contain (Math.min) so the whole frame shows
-      // instead of cropping the sides. On desktop, cover (Math.max) fills nicely.
-      const scale = cw < 640 ? Math.min(cw / iw, ch / ih) : Math.max(cw / iw, ch / ih);
+      const scale = Math.max(cw / iw, ch / ih);
       const x = (cw - iw * scale) / 2;
       const y = (ch - ih * scale) / 2;
 
@@ -158,16 +156,12 @@ function ActiveScrollAnimation() {
       className="relative"
       style={{ height: `${TOTAL_FRAMES * 28}px` }}
     >
-      <div
-        className="sticky top-0 w-full h-[100dvh] flex items-center justify-center overflow-hidden"
-        style={{
-          maskImage:
-            "linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)",
-        }}
-      >
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" style={{ filter: "brightness(1.2)" }} />
+      <div className="sticky top-0 w-full h-[100dvh] flex items-center justify-center overflow-hidden scroll-anim-sticky">
+        <canvas
+          ref={canvasRef}
+          className="w-full aspect-video sm:absolute sm:inset-0 sm:w-full sm:h-full sm:aspect-auto"
+          style={{ filter: "brightness(1.2)" }}
+        />
 
         <div className="relative z-10 max-w-[1400px] mx-auto w-full px-6 md:px-12">
           {textOverlays.map((overlay, i) => (

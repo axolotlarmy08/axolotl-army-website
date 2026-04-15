@@ -16,34 +16,29 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative min-h-[100dvh] flex items-center">
-      {/* Video background — oversized container so nothing clips during rotation */}
-      <div
-        className="absolute left-0 right-0"
-        style={{
-          top: "-15%",
-          bottom: "-15%",
-          maskImage:
-            "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
-        }}
-      >
+    <section className="relative pt-16 sm:pt-0 sm:min-h-[100dvh] sm:flex sm:items-center">
+      {/*
+        Video.
+        - Mobile: in normal flow, natural 16:9 at top of section.
+        - Desktop (sm+): absolute-positioned background filling the section,
+          with -15% overflow and a vertical fade mask (handled in globals.css).
+      */}
+      <div className="relative aspect-video w-full sm:absolute sm:inset-x-0 sm:w-auto sm:h-auto sm:aspect-auto hero-bg-desktop">
         <video
           autoPlay
           muted
           loop
           playsInline
           preload="auto"
-          className="w-full h-full object-contain sm:object-cover"
+          className="w-full h-full object-cover"
           style={{ filter: "brightness(1.35)" }}
         >
           <source src="/videos/hero.mp4" type="video/mp4" />
         </video>
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 max-w-[1400px] mx-auto w-full px-6 md:px-12 pt-20">
+      {/* Content — below video on mobile, overlaid on desktop */}
+      <div className="relative z-10 max-w-[1400px] mx-auto w-full px-6 md:px-12 py-10 sm:py-0 sm:pt-20">
         <div className="max-w-2xl">
           <motion.div
             initial={mounted ? { opacity: 0, y: 30 } : false}
@@ -98,12 +93,12 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator — desktop only (on mobile content flows naturally) */}
       <motion.div
         initial={mounted ? { opacity: 0 } : false}
         animate={mounted ? { opacity: 1 } : undefined}
         transition={{ delay: 1.5 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+        className="hidden sm:block absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
       >
         <motion.div
           animate={{ y: [0, 8, 0] }}

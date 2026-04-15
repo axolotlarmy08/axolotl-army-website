@@ -64,6 +64,50 @@ body {
   );
 }
 
+/* Scroll animation sticky container — fade mask only on desktop,
+   because on mobile the canvas is a compact 16:9 box with no need to blend. */
+@media (min-width: 640px) {
+  .scroll-anim-sticky {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 25%,
+      black 75%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 25%,
+      black 75%,
+      transparent 100%
+    );
+  }
+}
+
+/* Hero background video — desktop-only overflow + fade mask.
+   On mobile the video is in normal flow (16:9), so no mask needed. */
+@media (min-width: 640px) {
+  .hero-bg-desktop {
+    top: -15%;
+    bottom: -15%;
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 8%,
+      black 55%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      black 8%,
+      black 55%,
+      transparent 100%
+    );
+  }
+}
+
 /* Section blend gradient */
 .section-blend-top {
   background: linear-gradient(to bottom, var(--background) 0%, transparent 100%);
