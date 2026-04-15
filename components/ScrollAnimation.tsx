@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Play } from "@phosphor-icons/react";
 
 const TOTAL_FRAMES = 91;
-const FRAME_PATH = "/frames/frame-";
-const MOBILE_VIDEO_SRC = "/videos/scroll-sequence.mp4";
+const FRAME_PATH_DESKTOP = "/frames/frame-";
+const FRAME_PATH_MOBILE = "/frames-mobile/frame-";
 
 const textOverlays = [
   { text: "Generate stunning AI videos in seconds", start: 0.1, end: 0.35 },
@@ -17,9 +17,6 @@ function padNumber(n: number, width: number) {
   return String(n).padStart(width, "0");
 }
 
-// Shared fade-in/out logic: given a normalized progress [0..1] and a
-// start/end window, return the styling for an overlay so it smoothly fades
-// in at `start`, stays visible, and fades out by `end`.
 function getTextStyle(progress: number, start: number, end: number) {
   const fadeIn = start + 0.05;
   const fadeOut = end - 0.05;
@@ -72,120 +69,31 @@ function ScrollPlaceholder() {
   );
 }
 
-/**
- * Mobile version: regular autoplay looping <video> in normal flow, back-to-back
- * with the Hero. Text overlays fade in/out based on video currentTime so the
- * experience matches the desktop scroll-driven version but without the huge
- * dark void a full-viewport sticky creates on narrow screens.
- */
-function MobileVideoAnimation() {
-  // Scroll-driven but in normal flow — the video scrolls with the page, its
-  // currentTime is seeked based on how far through the viewport it has
-  // traveled. No sticky container, no dark void above/below.
-  const sectionRef = useRef<HTMLElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+type Variant = "mobile" | "desktop";
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    const onMeta = () => {
-      if (Number.isFinite(video.duration) && video.duration > 0) {
-        setDuration(video.duration);
-      }
-    };
-    if (video.readyState >= 1) onMeta();
-    video.addEventListener("loadedmetadata", onMeta);
-    return () => video.removeEventListener("loadedmetadata", onMeta);
-  }, []);
-
-  // Scroll → progress based on how far the section has traveled through the
-  // viewport. 0 when its top edge is at the bottom of the viewport (just
-  // appearing); 1 when its bottom edge is at the top (just leaving).
-  useEffect(() => {
-    const section = sectionRef.current;
-    if (!section) return;
-
-    const onScroll = () => {
-      const rect = section.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const total = rect.height + vh;
-      if (total <= 0) return;
-      const scrolled = vh - rect.top;
-      const p = Math.max(0, Math.min(1, scrolled / total));
-      setProgress(p);
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, []);
-
-  // Drive video currentTime from progress (seek, don't play).
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || duration <= 0) return;
-    const target = progress * duration;
-    if (Math.abs(video.currentTime - target) > 0.03) {
-      try {
-        video.currentTime = target;
-      } catch {
-        // some browsers throw before the video is seekable; ignore
-      }
-    }
-  }, [progress, duration]);
-
-  return (
-    <section
-      ref={sectionRef}
-      className="relative w-full aspect-video overflow-hidden scroll-anim-canvas"
-    >
-      <video
-        ref={videoRef}
-        muted
-        playsInline
-        preload="auto"
-        className="w-full h-full object-cover"
-        style={{ filter: "brightness(1.2)" }}
-      >
-        <source src={MOBILE_VIDEO_SRC} type="video/mp4" />
-      </video>
-
-      {/* Text overlays fade in/out based on scroll progress */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        {textOverlays.map((overlay, i) => (
-          <div
-            key={i}
-            style={getTextStyle(progress, overlay.start, overlay.end)}
-            className="absolute inset-0 flex items-center justify-center px-6"
-          >
-            <h2 className="text-2xl font-bold tracking-tighter text-center text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
-              {overlay.text}
-            </h2>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+interface ActiveProps {
+  variant: Variant;
 }
 
 /**
- * Desktop version: scroll-driven frame-by-frame animation in a full-viewport
- * sticky container with atmospheric fade masks. Pre-loads all 91 JPG frames.
+ * Scroll-driven canvas animation. Works for both mobile and desktop:
+ * - Desktop: cover-scaled frame fills the sticky viewport as before.
+ * - Mobile: contain-scaled sharp frame sits centered, with a blurred+dimmed
+ *   cover-scaled copy of the same frame filling the rest of the viewport as
+ *   an atmospheric backdrop — so the surrounding area doesn't read as an
+ *   empty black void. Still scroll-scrubbed and pinned (sticky 100dvh).
  */
-function ActiveScrollAnimation() {
+function ActiveScrollAnimation({ variant }: ActiveProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const [framesLoaded, setFramesLoaded] = useState(false);
   const [progress, setProgress] = useState(0);
 
-  // Native scroll listener instead of framer-motion useScroll
+  const framePath =
+    variant === "mobile" ? FRAME_PATH_MOBILE : FRAME_PATH_DESKTOP;
+
+  // Scroll listener.
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -201,18 +109,19 @@ function ActiveScrollAnimation() {
       setProgress(p);
     };
 
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Preload frames
+  // Preload frames.
   useEffect(() => {
     const images: HTMLImageElement[] = [];
     let loaded = 0;
 
     for (let i = 1; i <= TOTAL_FRAMES; i++) {
       const img = new Image();
-      img.src = `${FRAME_PATH}${padNumber(i, 4)}.jpg`;
+      img.src = `${framePath}${padNumber(i, 4)}.jpg`;
       img.onload = () => {
         loaded++;
         if (loaded === TOTAL_FRAMES) setFramesLoaded(true);
@@ -224,9 +133,9 @@ function ActiveScrollAnimation() {
       images.push(img);
     }
     imagesRef.current = images;
-  }, []);
+  }, [framePath]);
 
-  // Draw frame based on progress
+  // Draw frame based on progress.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !framesLoaded) return;
@@ -241,24 +150,51 @@ function ActiveScrollAnimation() {
     const img = imagesRef.current[frameIndex];
 
     if (img && img.complete && img.naturalWidth > 0) {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = canvas.offsetWidth * dpr;
+      canvas.height = canvas.offsetHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       const cw = canvas.offsetWidth;
       const ch = canvas.offsetHeight;
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
 
-      // Desktop-only (mobile uses MobileVideoAnimation). Cover-scale.
-      const scale = Math.max(cw / iw, ch / ih);
-      const x = (cw - iw * scale) / 2;
-      const y = (ch - ih * scale) / 2;
-
       ctx.clearRect(0, 0, cw, ch);
-      ctx.drawImage(img, x, y, iw * scale, ih * scale);
+
+      if (variant === "mobile") {
+        // 1) Blurred cover-scale backdrop so the viewport isn't empty black.
+        const bgScale = Math.max(cw / iw, ch / ih);
+        const bgW = iw * bgScale;
+        const bgH = ih * bgScale;
+        const bgX = (cw - bgW) / 2;
+        const bgY = (ch - bgH) / 2;
+        ctx.save();
+        ctx.filter = "blur(28px) brightness(0.55)";
+        ctx.drawImage(img, bgX, bgY, bgW, bgH);
+        ctx.restore();
+
+        // 2) Sharp contain-scale frame centered — full axolotl visible.
+        const fgScale = Math.min(cw / iw, ch / ih);
+        const fgW = iw * fgScale;
+        const fgH = ih * fgScale;
+        const fgX = (cw - fgW) / 2;
+        const fgY = (ch - fgH) / 2;
+        ctx.save();
+        ctx.filter = "brightness(1.2)";
+        ctx.drawImage(img, fgX, fgY, fgW, fgH);
+        ctx.restore();
+      } else {
+        const scale = Math.max(cw / iw, ch / ih);
+        const x = (cw - iw * scale) / 2;
+        const y = (ch - ih * scale) / 2;
+        ctx.save();
+        ctx.filter = "brightness(1.2)";
+        ctx.drawImage(img, x, y, iw * scale, ih * scale);
+        ctx.restore();
+      }
     }
-  }, [progress, framesLoaded]);
+  }, [progress, framesLoaded, variant]);
 
   return (
     <section
@@ -271,7 +207,6 @@ function ActiveScrollAnimation() {
           <canvas
             ref={canvasRef}
             className="absolute inset-0 w-full h-full"
-            style={{ filter: "brightness(1.2)" }}
           />
         </div>
 
@@ -294,31 +229,31 @@ function ActiveScrollAnimation() {
 }
 
 export default function ScrollAnimation() {
-  // null until we detect the viewport on the client. Rendering nothing until
-  // then avoids hydration mismatch and prevents the mobile path from
-  // preloading 91 desktop JPG frames (and vice versa).
-  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [variant, setVariant] = useState<Variant | null>(null);
   const [hasFrames, setHasFrames] = useState<boolean | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
-    const update = () => setIsMobile(mq.matches);
+    const update = () => setVariant(mq.matches ? "mobile" : "desktop");
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  // Only probe the desktop frames when on desktop; mobile doesn't need them.
   useEffect(() => {
-    if (isMobile !== false) return;
+    if (!variant) return;
+    const path =
+      variant === "mobile" ? FRAME_PATH_MOBILE : FRAME_PATH_DESKTOP;
     const testImg = new Image();
-    testImg.src = `${FRAME_PATH}${padNumber(1, 4)}.jpg`;
+    testImg.src = `${path}${padNumber(1, 4)}.jpg`;
     testImg.onload = () => setHasFrames(true);
     testImg.onerror = () => setHasFrames(false);
-  }, [isMobile]);
+  }, [variant]);
 
-  if (isMobile === null) return null;
-  if (isMobile) return <MobileVideoAnimation />;
-  if (hasFrames === null) return null;
-  return hasFrames ? <ActiveScrollAnimation /> : <ScrollPlaceholder />;
+  if (!variant || hasFrames === null) return null;
+  return hasFrames ? (
+    <ActiveScrollAnimation variant={variant} />
+  ) : (
+    <ScrollPlaceholder />
+  );
 }
