@@ -64,29 +64,48 @@ body {
   );
 }
 
-/* Scroll animation sticky container — fade mask only on desktop,
-   because on mobile the canvas is a compact 16:9 box with no need to blend. */
-@media (min-width: 640px) {
-  .scroll-anim-sticky {
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 25%,
-      black 75%,
-      transparent 100%
-    );
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 25%,
-      black 75%,
-      transparent 100%
-    );
-  }
+/* Scroll animation sticky container — vertical fade blends the canvas
+   into the page background on all screen sizes. On mobile, where the frame
+   is contain-scaled and sits in the middle of the viewport, this mask makes
+   the surrounding dark space read as an atmospheric fade rather than empty
+   black bars. */
+.scroll-anim-sticky {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 25%,
+    black 75%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 25%,
+    black 75%,
+    transparent 100%
+  );
 }
 
-/* Hero background video — desktop-only overflow + fade mask.
-   On mobile the video is in normal flow (16:9), so no mask needed. */
+/* Hero background video.
+   On mobile: soft fade at the bottom so the square video blends into the
+   title/buttons block below it instead of ending in a hard edge.
+   On desktop (sm+): positioned as a full-bleed background with -15%
+   overflow and a vertical fade at both edges. */
+.hero-bg-desktop {
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 70%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 70%,
+    transparent 100%
+  );
+}
+
 @media (min-width: 640px) {
   .hero-bg-desktop {
     top: -15%;

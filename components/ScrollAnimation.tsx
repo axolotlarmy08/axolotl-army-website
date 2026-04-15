@@ -111,7 +111,9 @@ function ActiveScrollAnimation() {
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
 
-      const scale = Math.max(cw / iw, ch / ih);
+      // On narrow screens, use contain so nothing is cropped off the sides.
+      // On desktop, cover to fill the full-viewport sticky container.
+      const scale = cw < 640 ? Math.min(cw / iw, ch / ih) : Math.max(cw / iw, ch / ih);
       const x = (cw - iw * scale) / 2;
       const y = (ch - ih * scale) / 2;
 
@@ -159,7 +161,7 @@ function ActiveScrollAnimation() {
       <div className="sticky top-0 w-full h-[100dvh] flex items-center justify-center overflow-hidden scroll-anim-sticky">
         <canvas
           ref={canvasRef}
-          className="w-full aspect-video sm:absolute sm:inset-0 sm:w-full sm:h-full sm:aspect-auto"
+          className="absolute inset-0 w-full h-full"
           style={{ filter: "brightness(1.2)" }}
         />
 

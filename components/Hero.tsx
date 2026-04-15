@@ -23,7 +23,7 @@ export default function Hero() {
         - Desktop (sm+): absolute-positioned background filling the section,
           with -15% overflow and a vertical fade mask (handled in globals.css).
       */}
-      <div className="relative aspect-video w-full sm:absolute sm:inset-x-0 sm:w-auto sm:h-auto sm:aspect-auto hero-bg-desktop">
+      <div className="relative aspect-square w-full sm:absolute sm:inset-x-0 sm:w-auto sm:h-auto sm:aspect-auto hero-bg-desktop">
         <video
           autoPlay
           muted
