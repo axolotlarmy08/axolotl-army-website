@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Play } from "@phosphor-icons/react";
 
 const TOTAL_FRAMES = 91;
 const FRAME_PATH = "/frames/frame-";
+const MOBILE_VIDEO_SRC = "/videos/scroll-sequence.mp4";
 
 const textOverlays = [
   { text: "Generate stunning AI videos in seconds", start: 0.1, end: 0.35 },
@@ -14,6 +15,38 @@ const textOverlays = [
 
 function padNumber(n: number, width: number) {
   return String(n).padStart(width, "0");
+}
+
+// Shared fade-in/out logic: given a normalized progress [0..1] and a
+// start/end window, return the styling for an overlay so it smoothly fades
+// in at `start`, stays visible, and fades out by `end`.
+function getTextStyle(progress: number, start: number, end: number) {
+  const fadeIn = start + 0.05;
+  const fadeOut = end - 0.05;
+
+  let opacity = 0;
+  let translateY = 30;
+
+  if (progress >= start && progress <= end) {
+    if (progress < fadeIn) {
+      const t = (progress - start) / (fadeIn - start);
+      opacity = t;
+      translateY = 30 * (1 - t);
+    } else if (progress > fadeOut) {
+      const t = (progress - fadeOut) / (end - fadeOut);
+      opacity = 1 - t;
+      translateY = -30 * t;
+    } else {
+      opacity = 1;
+      translateY = 0;
+    }
+  }
+
+  return {
+    opacity,
+    transform: `translateY(${translateY}px)`,
+    transition: "opacity 0.1s, transform 0.1s",
+  };
 }
 
 function ScrollPlaceholder() {
@@ -39,6 +72,65 @@ function ScrollPlaceholder() {
   );
 }
 
+/**
+ * Mobile version: regular autoplay looping <video> in normal flow, back-to-back
+ * with the Hero. Text overlays fade in/out based on video currentTime so the
+ * experience matches the desktop scroll-driven version but without the huge
+ * dark void a full-viewport sticky creates on narrow screens.
+ */
+function MobileVideoAnimation() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const onTime = () => {
+      if (video.duration > 0 && Number.isFinite(video.duration)) {
+        setProgress(video.currentTime / video.duration);
+      }
+    };
+    video.addEventListener("timeupdate", onTime);
+    return () => video.removeEventListener("timeupdate", onTime);
+  }, []);
+
+  return (
+    <section className="relative w-full scroll-anim-canvas">
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        className="w-full aspect-video object-cover"
+        style={{ filter: "brightness(1.2)" }}
+      >
+        <source src={MOBILE_VIDEO_SRC} type="video/mp4" />
+      </video>
+
+      {/* Text overlays fade in/out based on video progress */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {textOverlays.map((overlay, i) => (
+          <div
+            key={i}
+            style={getTextStyle(progress, overlay.start, overlay.end)}
+            className="absolute inset-0 flex items-center justify-center px-6"
+          >
+            <h2 className="text-2xl font-bold tracking-tighter text-center text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+              {overlay.text}
+            </h2>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Desktop version: scroll-driven frame-by-frame animation in a full-viewport
+ * sticky container with atmospheric fade masks. Pre-loads all 91 JPG frames.
+ */
 function ActiveScrollAnimation() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -111,9 +203,8 @@ function ActiveScrollAnimation() {
       const iw = img.naturalWidth;
       const ih = img.naturalHeight;
 
-      // On narrow screens, use contain so nothing is cropped off the sides.
-      // On desktop, cover to fill the full-viewport sticky container.
-      const scale = cw < 640 ? Math.min(cw / iw, ch / ih) : Math.max(cw / iw, ch / ih);
+      // Desktop-only (mobile uses MobileVideoAnimation). Cover-scale.
+      const scale = Math.max(cw / iw, ch / ih);
       const x = (cw - iw * scale) / 2;
       const y = (ch - ih * scale) / 2;
 
@@ -122,36 +213,6 @@ function ActiveScrollAnimation() {
     }
   }, [progress, framesLoaded]);
 
-  // Text overlay visibility based on progress
-  const getTextStyle = (start: number, end: number) => {
-    const fadeIn = start + 0.05;
-    const fadeOut = end - 0.05;
-
-    let opacity = 0;
-    let translateY = 30;
-
-    if (progress >= start && progress <= end) {
-      if (progress < fadeIn) {
-        const t = (progress - start) / (fadeIn - start);
-        opacity = t;
-        translateY = 30 * (1 - t);
-      } else if (progress > fadeOut) {
-        const t = (progress - fadeOut) / (end - fadeOut);
-        opacity = 1 - t;
-        translateY = -30 * t;
-      } else {
-        opacity = 1;
-        translateY = 0;
-      }
-    }
-
-    return {
-      opacity,
-      transform: `translateY(${translateY}px)`,
-      transition: "opacity 0.1s, transform 0.1s",
-    };
-  };
-
   return (
     <section
       ref={sectionRef}
@@ -159,12 +220,7 @@ function ActiveScrollAnimation() {
       style={{ height: `${TOTAL_FRAMES * 28}px` }}
     >
       <div className="sticky top-0 w-full h-[100dvh] flex items-center justify-center overflow-hidden">
-        {/* Canvas wrapper sized to the frame (aspect-video on mobile, full
-            viewport on desktop). The fade mask is applied here so the frame
-            edges blend softly into the page background instead of creating
-            a hard line. Absolute so it escapes the flex flow and doesn't
-            push the text overlay off to the side. */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full aspect-video sm:inset-0 sm:top-0 sm:translate-y-0 sm:h-full sm:aspect-auto scroll-anim-canvas">
+        <div className="absolute inset-0 scroll-anim-canvas">
           <canvas
             ref={canvasRef}
             className="absolute inset-0 w-full h-full"
@@ -176,7 +232,7 @@ function ActiveScrollAnimation() {
           {textOverlays.map((overlay, i) => (
             <div
               key={i}
-              style={getTextStyle(overlay.start, overlay.end)}
+              style={getTextStyle(progress, overlay.start, overlay.end)}
               className="absolute inset-0 flex items-center justify-center px-6 pt-16"
             >
               <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tighter text-center text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]">
@@ -191,23 +247,31 @@ function ActiveScrollAnimation() {
 }
 
 export default function ScrollAnimation() {
-  const [hasFrames, setHasFrames] = useState(false);
-  const [checked, setChecked] = useState(false);
+  // null until we detect the viewport on the client. Rendering nothing until
+  // then avoids hydration mismatch and prevents the mobile path from
+  // preloading 91 desktop JPG frames (and vice versa).
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  const [hasFrames, setHasFrames] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const testImg = new Image();
-    testImg.src = `${FRAME_PATH}${padNumber(1, 4)}.jpg`;
-    testImg.onload = () => {
-      setHasFrames(true);
-      setChecked(true);
-    };
-    testImg.onerror = () => {
-      setHasFrames(false);
-      setChecked(true);
-    };
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
   }, []);
 
-  if (!checked) return null;
+  // Only probe the desktop frames when on desktop; mobile doesn't need them.
+  useEffect(() => {
+    if (isMobile !== false) return;
+    const testImg = new Image();
+    testImg.src = `${FRAME_PATH}${padNumber(1, 4)}.jpg`;
+    testImg.onload = () => setHasFrames(true);
+    testImg.onerror = () => setHasFrames(false);
+  }, [isMobile]);
 
+  if (isMobile === null) return null;
+  if (isMobile) return <MobileVideoAnimation />;
+  if (hasFrames === null) return null;
   return hasFrames ? <ActiveScrollAnimation /> : <ScrollPlaceholder />;
 }
