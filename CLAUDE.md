@@ -56,12 +56,19 @@ npm run dev           # port 3000
 
 ## Making changes
 
+Shortcut script — stages everything, commits, pushes, and prints the
+Vercel deployments URL. Run from anywhere:
+
 ```bash
-cd "/Users/codybrown/Desktop/claude 2026/Website design/axolotl-army-website"
-git add -A
-git commit -m "describe change"
-git push
+/Users/codybrown/Desktop/claude\ 2026/Website\ design/axolotl-army-website/deploy.sh "what you changed"
 ```
 
-Pushes to `main` deploy automatically. Preview deployments (branches / PRs)
+Or from inside the repo:
+
+```bash
+./deploy.sh "what you changed"
+```
+
+Leave the message off and it'll prompt for one. Pushes to `main` trigger
+an auto-deploy on Vercel (~1–2 min). Preview deployments on branches / PRs
 also work out of the box.
