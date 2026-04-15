@@ -79,71 +79,84 @@ function ScrollPlaceholder() {
  * dark void a full-viewport sticky creates on narrow screens.
  */
 function MobileVideoAnimation() {
+  // Scroll-driven but in normal flow — the video scrolls with the page, its
+  // currentTime is seeked based on how far through the viewport it has
+  // traveled. No sticky container, no dark void above/below.
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
 
-  // Track video currentTime → progress for the text-overlay fades.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const onTime = () => {
-      if (video.duration > 0 && Number.isFinite(video.duration)) {
-        setProgress(video.currentTime / video.duration);
+    const onMeta = () => {
+      if (Number.isFinite(video.duration) && video.duration > 0) {
+        setDuration(video.duration);
       }
     };
-    video.addEventListener("timeupdate", onTime);
-    return () => video.removeEventListener("timeupdate", onTime);
+    if (video.readyState >= 1) onMeta();
+    video.addEventListener("loadedmetadata", onMeta);
+    return () => video.removeEventListener("loadedmetadata", onMeta);
   }, []);
 
-  // Only play while the section is in view. If the user hasn't scrolled to
-  // it yet, reset currentTime to 0 so the messaging always starts from the
-  // top when they arrive, not mid-sequence.
+  // Scroll → progress based on how far the section has traveled through the
+  // viewport. 0 when its top edge is at the bottom of the viewport (just
+  // appearing); 1 when its bottom edge is at the top (just leaving).
   useEffect(() => {
     const section = sectionRef.current;
-    const video = videoRef.current;
-    if (!section || !video) return;
+    if (!section) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            video.play().catch(() => {
-              // autoplay can be blocked; nothing else we can do here
-            });
-          } else {
-            video.pause();
-            // If the user hasn't yet scrolled past it for the first time,
-            // keep it rewound so they see the full sequence when they arrive.
-            if (entry.boundingClientRect.top > 0) {
-              video.currentTime = 0;
-              setProgress(0);
-            }
-          }
-        }
-      },
-      { threshold: 0.25 }
-    );
+    const onScroll = () => {
+      const rect = section.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const total = rect.height + vh;
+      if (total <= 0) return;
+      const scrolled = vh - rect.top;
+      const p = Math.max(0, Math.min(1, scrolled / total));
+      setProgress(p);
+    };
 
-    observer.observe(section);
-    return () => observer.disconnect();
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
 
+  // Drive video currentTime from progress (seek, don't play).
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || duration <= 0) return;
+    const target = progress * duration;
+    if (Math.abs(video.currentTime - target) > 0.03) {
+      try {
+        video.currentTime = target;
+      } catch {
+        // some browsers throw before the video is seekable; ignore
+      }
+    }
+  }, [progress, duration]);
+
   return (
-    <section ref={sectionRef} className="relative w-full scroll-anim-canvas">
+    <section
+      ref={sectionRef}
+      className="relative w-full aspect-video overflow-hidden scroll-anim-canvas"
+    >
       <video
         ref={videoRef}
         muted
-        loop
         playsInline
         preload="auto"
-        className="w-full aspect-video object-cover"
+        className="w-full h-full object-cover"
         style={{ filter: "brightness(1.2)" }}
       >
         <source src={MOBILE_VIDEO_SRC} type="video/mp4" />
       </video>
 
-      {/* Text overlays fade in/out based on video progress */}
+      {/* Text overlays fade in/out based on scroll progress */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         {textOverlays.map((overlay, i) => (
           <div
