@@ -16,13 +16,30 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative pt-16 sm:pt-0 sm:min-h-[100dvh] sm:flex sm:items-center">
+    <section className="relative pt-16 sm:pt-0 sm:min-h-[100dvh] sm:flex sm:items-center overflow-hidden">
       {/*
         Video.
-        - Mobile: in normal flow, natural 16:9 at top of section.
-        - Desktop (sm+): absolute-positioned background filling the section,
-          with -15% overflow and a vertical fade mask (handled in globals.css).
+        - Mobile: in normal flow, natural 1:1 at top of section.
+        - Desktop: the sharp video is contain-scaled (no content cropped),
+          and a blurred + dimmed copy fills the rest of the viewport as an
+          atmospheric backdrop so the sides don't read as black bars.
       */}
+      {/* Desktop backdrop (blurred, dimmed — fills any space around the square video) */}
+      <div className="hidden sm:block absolute inset-0 pointer-events-none">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="w-full h-full object-cover"
+          style={{ filter: "blur(40px) brightness(0.55)" }}
+          aria-hidden="true"
+        >
+          <source src="/videos/hero.mp4" type="video/mp4" />
+        </video>
+      </div>
+
       <div className="relative aspect-square w-full sm:absolute sm:inset-x-0 sm:w-auto sm:h-auto sm:aspect-auto hero-bg-desktop">
         <video
           autoPlay
