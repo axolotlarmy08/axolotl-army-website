@@ -94,89 +94,85 @@ function Card({ card, delay }: { card: FormatCard; delay: number }) {
     return () => obs.disconnect();
   }, []);
 
+  const hasMedia = Boolean(card.videoSrc || card.youtubeId);
+
   return (
     <RevealOnScroll delay={delay}>
       <Wrapper
         {...wrapperProps}
-        className="group relative block rounded-[2rem] border border-border/60 hover:border-accent/40 transition-all duration-300 overflow-hidden bg-surface/50"
+        className="group block rounded-[2rem] border border-border/60 hover:border-accent/40 transition-all duration-300 overflow-hidden bg-surface/50"
       >
-        {/* Optional background video — local file or YouTube embed. */}
-        {card.videoSrc && (
-          <video
-            ref={videoRef}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
-          >
-            <source src={card.videoSrc} type="video/mp4" />
-          </video>
-        )}
-        {card.youtubeId && (
-          <iframe
-            src={`https://www.youtube.com/embed/${card.youtubeId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&playlist=${card.youtubeId}&playsinline=1&modestbranding=1`}
-            allow="autoplay; encrypted-media"
-            className="absolute inset-0 w-full h-full object-cover scale-[1.35] opacity-80 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-            style={{ border: "none" }}
-            title="Short-form demo"
-          />
-        )}
+        {/* ── Video area (top) ── */}
+        <div className="relative aspect-[4/3] overflow-hidden">
+          {/* Local video */}
+          {card.videoSrc && (
+            <video
+              ref={videoRef}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            >
+              <source src={card.videoSrc} type="video/mp4" />
+            </video>
+          )}
 
-        {/* Animated glow — two layered gradients, one slowly drifting.
-            Dimmed further when a video is present so it reads as a tint
-            rather than covering the video. */}
-        <div
-          aria-hidden
-          className={`absolute inset-0 transition-opacity duration-700 ${
-            card.videoSrc || card.youtubeId
-              ? "opacity-30 group-hover:opacity-20"
-              : "opacity-80 group-hover:opacity-100"
-          }`}
-          style={{ background: card.gradient }}
-        />
-        {!card.videoSrc && !card.youtubeId && (
-          <div
-            aria-hidden
-            className="absolute -inset-24 opacity-60 blur-3xl animate-[formatPulse_12s_ease-in-out_infinite_alternate]"
-            style={{ background: card.gradient }}
-          />
-        )}
-        {/* Dark base for legibility. Stronger (more opaque) when a video
-            is behind it so the text holds up over motion. */}
-        <div
-          aria-hidden
-          className={`absolute inset-0 ${
-            card.videoSrc || card.youtubeId
-              ? "bg-gradient-to-t from-background/90 via-background/55 to-background/20"
-              : "bg-gradient-to-br from-background/40 via-background/60 to-background/80"
-          }`}
-        />
+          {/* YouTube embed */}
+          {card.youtubeId && (
+            <iframe
+              src={`https://www.youtube.com/embed/${card.youtubeId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&playlist=${card.youtubeId}&playsinline=1&modestbranding=1`}
+              allow="autoplay; encrypted-media"
+              className="absolute inset-0 w-full h-full scale-[1.4] pointer-events-none"
+              style={{ border: "none" }}
+              title={card.label}
+            />
+          )}
 
-        {/* Content */}
-        <div className="relative p-7 md:p-10 flex flex-col gap-4 min-h-[340px] md:min-h-[420px]">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] md:text-xs font-mono tracking-wider uppercase text-foreground/80 bg-background/40 backdrop-blur-sm border border-border/60 px-2.5 py-1 rounded-full">
+          {/* Gradient fallback when no media */}
+          {!hasMedia && (
+            <>
+              <div
+                aria-hidden
+                className="absolute inset-0 opacity-80"
+                style={{ background: card.gradient }}
+              />
+              <div
+                aria-hidden
+                className="absolute -inset-24 opacity-60 blur-3xl animate-[formatPulse_12s_ease-in-out_infinite_alternate]"
+                style={{ background: card.gradient }}
+              />
+              <div
+                aria-hidden
+                className="absolute inset-0 bg-gradient-to-br from-background/40 via-background/60 to-background/80"
+              />
+            </>
+          )}
+
+          {/* Badge + arrow hover overlay */}
+          <div className="absolute inset-x-0 top-0 p-4 flex items-start justify-between z-10">
+            <span className="text-[11px] md:text-xs font-mono tracking-wider uppercase text-foreground bg-background/50 backdrop-blur-sm border border-border/60 px-2.5 py-1 rounded-full">
               {card.label}
             </span>
             {card.href && (
-              <span className="w-9 h-9 rounded-full bg-background/40 backdrop-blur-sm border border-border/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="w-9 h-9 rounded-full bg-background/50 backdrop-blur-sm border border-border/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <ArrowRight size={16} weight="bold" className="text-foreground" />
               </span>
             )}
           </div>
+        </div>
 
-          <div className="mt-auto">
-            <div className="w-12 h-12 rounded-2xl bg-background/40 backdrop-blur-sm border border-border/60 flex items-center justify-center mb-5">
-              <Icon size={24} weight="duotone" className="text-foreground" />
-            </div>
-            <h3 className="text-xl md:text-2xl font-semibold tracking-tight leading-tight text-foreground mb-3">
-              {card.title}
-            </h3>
-            <p className="text-foreground/75 text-sm md:text-[15px] leading-relaxed">
-              {card.description}
-            </p>
+        {/* ── Text area (below video, solid bg) ── */}
+        <div className="p-6 md:p-7">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center mb-4">
+            <Icon size={20} weight="duotone" className="text-accent" />
           </div>
+          <h3 className="text-lg md:text-xl font-semibold tracking-tight leading-tight text-foreground mb-2">
+            {card.title}
+          </h3>
+          <p className="text-muted text-sm leading-relaxed">
+            {card.description}
+          </p>
         </div>
       </Wrapper>
     </RevealOnScroll>
