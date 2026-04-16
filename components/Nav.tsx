@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { List, X, ShoppingBag } from "@phosphor-icons/react";
 import { useCart } from "./CartProvider";
 
@@ -19,19 +21,29 @@ const navLinks = [
 export default function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { itemCount, openCart } = useCart();
+  const pathname = usePathname();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-40">
       <div className="max-w-[1400px] mx-auto flex items-center justify-between px-6 py-4">
-        {/* Logo */}
-        <a href="#" className="flex items-center gap-3 group">
+        {/* Logo — goes home from any other page; on home, scrolls to top */}
+        <Link
+          href="/"
+          onClick={(e) => {
+            if (pathname === "/") {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          }}
+          className="flex items-center gap-3 group"
+        >
           <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent font-bold text-sm tracking-tight group-hover:bg-accent/20 transition-colors">
             AA
           </div>
           <span className="text-foreground font-semibold tracking-tight text-lg hidden sm:block">
             Axolotl Army
           </span>
-        </a>
+        </Link>
 
         {/* Desktop links */}
         <div className="hidden md:flex items-center gap-8">
