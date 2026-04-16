@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,11 +21,65 @@ const navLinks = [
 
 export default function Nav() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [visible, setVisible] = useState(true);
   const { itemCount, openCart } = useCart();
   const pathname = usePathname();
 
+  // Hide nav while scrolling, show when scrolling stops.
+  // On reappear, log which section the user was looking at.
+  useEffect(() => {
+    let scrollTimer: ReturnType<typeof setTimeout>;
+    let isScrolling = false;
+
+    const getVisibleSection = (): string => {
+      const sections = document.querySelectorAll("section[id]");
+      let best = "top";
+      let bestDist = Infinity;
+      const mid = window.innerHeight / 2;
+      sections.forEach((s) => {
+        const rect = s.getBoundingClientRect();
+        const dist = Math.abs(rect.top + rect.height / 2 - mid);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = s.id || "unknown";
+        }
+      });
+      return best;
+    };
+
+    const onScroll = () => {
+      if (!isScrolling) {
+        isScrolling = true;
+        setVisible(false);
+      }
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        isScrolling = false;
+        setVisible(true);
+        // Track which section the user stopped on
+        const section = getVisibleSection();
+        if (typeof window !== "undefined" && (window as any).gtag) {
+          (window as any).gtag("event", "scroll_stop", { section });
+        }
+        console.log("[nav] user stopped scrolling at:", section);
+      }, 400);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(scrollTimer);
+    };
+  }, []);
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40">
+    <nav
+      className="fixed top-0 left-0 right-0 z-40 transition-all duration-300"
+      style={{
+        transform: visible ? "translateY(0)" : "translateY(-100%)",
+        opacity: visible ? 1 : 0,
+      }}
+    >
       <div className="max-w-[1400px] mx-auto flex items-center justify-between px-6 py-4">
         {/* Logo — goes home from any other page; on home, scrolls to top */}
         <Link
