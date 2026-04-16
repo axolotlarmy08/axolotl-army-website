@@ -17,36 +17,27 @@ export default function Hero() {
   return (
     <>
       {/* ── Video hero ──
-           Two layers:
-           1. Blurred cover-scaled video fills the entire viewport (no gaps anywhere)
-           2. Sharp video on top, sized so the FULL 3D text is visible with padding
-
-           Same technique as the mobile scroll animation — atmospheric
-           backdrop behind a correctly-sized sharp foreground. */}
-      <section className="relative min-h-[100dvh] overflow-hidden">
-        {/* Layer 1: blurred backdrop — fills edge to edge, no crop visible */}
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: "blur(30px) brightness(0.6) saturate(1.2)", transform: "scale(1.1)" }}
-          aria-hidden="true"
-        >
-          <source src="/videos/hero.mp4" type="video/mp4" />
-        </video>
-
-        {/* Layer 2: sharp video — sized to show full text, radial mask fades
-             edges into the blurred backdrop so there's no visible box */}
+           Uniform dark bg + sharp video with radial fade + glow underneath
+           so the 3D text feels like it's popping out of the screen. */}
+      <section className="relative min-h-[100dvh] overflow-hidden flex items-center justify-center bg-background">
+        {/* Glow behind the video — cyan/accent radial that gives depth,
+            like a light source behind the text pushing it toward you */}
         <div
-          className="absolute inset-0 flex items-center justify-center"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 55% at 50% 48%, rgba(34,211,238,0.12) 0%, rgba(34,211,238,0.04) 40%, transparent 70%)",
+          }}
+        />
+
+        {/* Sharp video — radial mask fades edges into the uniform bg */}
+        <div
+          className="relative w-full h-full flex items-center justify-center"
           style={{
             maskImage:
-              "radial-gradient(ellipse 75% 80% at 50% 48%, black 50%, transparent 100%)",
+              "radial-gradient(ellipse 80% 85% at 50% 48%, black 45%, transparent 95%)",
             WebkitMaskImage:
-              "radial-gradient(ellipse 75% 80% at 50% 48%, black 50%, transparent 100%)",
+              "radial-gradient(ellipse 80% 85% at 50% 48%, black 45%, transparent 95%)",
           }}
         >
           <video
@@ -55,8 +46,8 @@ export default function Hero() {
             loop
             playsInline
             preload="auto"
-            className="max-h-[92vh] max-w-[92vw] object-contain"
-            style={{ filter: "brightness(1.4)" }}
+            className="max-h-[94vh] max-w-[94vw] object-contain"
+            style={{ filter: "brightness(1.45)" }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
