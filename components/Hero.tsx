@@ -25,9 +25,9 @@ export default function Hero() {
             top: "-15%",
             bottom: "-15%",
             maskImage:
-              "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, black 5%, black 85%, transparent 100%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, black 5%, black 85%, transparent 100%)",
           }}
         >
           <video
@@ -37,26 +37,13 @@ export default function Hero() {
             playsInline
             preload="auto"
             className="w-full h-full object-cover"
-            style={{ filter: "brightness(1.35)" }}
+            style={{ filter: "brightness(1.5)" }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
         </div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          initial={mounted ? { opacity: 0 } : false}
-          animate={mounted ? { opacity: 1 } : undefined}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
-        >
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-          >
-            <ArrowDown size={20} className="text-muted" />
-          </motion.div>
-        </motion.div>
+        {/* Scroll indicator removed — text section below makes scrolling obvious */}
       </section>
 
       {/* ── Hero text (below video, on solid bg) ── */}
