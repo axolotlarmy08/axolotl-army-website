@@ -16,47 +16,22 @@ export default function Hero() {
 
   return (
     <>
-      <section className="relative min-h-[100dvh] overflow-hidden flex items-center justify-center bg-background">
-        {/* Video — contain-scaled so full text is visible at correct size */}
+      {/* ── Video hero — full width, no gaps, no padding ── */}
+      <section className="relative min-h-[100dvh] overflow-hidden bg-background">
+        {/* Video takes full viewport width, height scales proportionally
+            (1:1 source = height equals width). Section clips to viewport.
+            The text sits in the upper-middle of the frame so it's visible. */}
         <video
           autoPlay
           muted
           loop
           playsInline
           preload="auto"
-          className="max-h-[94vh] max-w-[94vw] object-contain"
-          style={{ filter: "brightness(1.6)" }}
+          className="w-full h-auto min-h-[100dvh] object-cover"
+          style={{ filter: "brightness(1.5)" }}
         >
           <source src="/videos/hero.mp4" type="video/mp4" />
         </video>
-
-        {/* Spotlight overlay — starts fading much further out so the
-            brightness extends well past the text, covering the video
-            edges before the straight lines appear */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `
-              radial-gradient(
-                ellipse 70% 68% at 50% 48%,
-                transparent 40%,
-                rgba(15,17,19,0.3) 55%,
-                rgba(15,17,19,0.65) 68%,
-                rgba(15,17,19,0.92) 80%,
-                rgba(15,17,19,1) 92%
-              )
-            `,
-          }}
-        />
-
-        {/* Cyan glow in the spotlight center */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 45% 42% at 50% 48%, rgba(34,211,238,0.07) 0%, transparent 55%)",
-          }}
-        />
       </section>
 
       {/* Text below video */}
