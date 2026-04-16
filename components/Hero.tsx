@@ -25,24 +25,25 @@ export default function Hero() {
           playsInline
           preload="auto"
           className="max-h-[94vh] max-w-[94vw] object-contain"
-          style={{ filter: "brightness(1.45)" }}
+          style={{ filter: "brightness(1.6)" }}
         >
           <source src="/videos/hero.mp4" type="video/mp4" />
         </video>
 
-        {/* Spotlight overlay ON TOP — hides the video rectangle edges
-            by darkening them to page bg color. Creates an oval spotlight
-            effect around the text. */}
+        {/* Spotlight overlay — starts fading much further out so the
+            brightness extends well past the text, covering the video
+            edges before the straight lines appear */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background: `
               radial-gradient(
-                ellipse 50% 52% at 50% 48%,
-                transparent 35%,
-                rgba(15,17,19,0.55) 55%,
-                rgba(15,17,19,0.88) 72%,
-                rgba(15,17,19,1) 100%
+                ellipse 70% 68% at 50% 48%,
+                transparent 40%,
+                rgba(15,17,19,0.3) 55%,
+                rgba(15,17,19,0.65) 68%,
+                rgba(15,17,19,0.92) 80%,
+                rgba(15,17,19,1) 92%
               )
             `,
           }}
