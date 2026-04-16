@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { List, X, ShoppingBag } from "@phosphor-icons/react";
@@ -37,9 +38,13 @@ export default function Nav() {
           }}
           className="flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent font-bold text-sm tracking-tight group-hover:bg-accent/20 transition-colors">
-            AA
-          </div>
+          <Image
+            src="/images/logo-axolotl-sm.png"
+            alt="Axolotl Army logo"
+            width={36}
+            height={36}
+            className="rounded-xl"
+          />
           <span className="text-foreground font-semibold tracking-tight text-lg hidden sm:block">
             Axolotl Army
           </span>
