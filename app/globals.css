@@ -61,6 +61,18 @@ body {
   scroll-snap-align: start;
 }
 
+/* OutputFormats card glow — slowly drifts and pulses so the gradient
+   feels alive rather than static. */
+@keyframes formatPulse {
+  0%   { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
+  50%  { transform: translate3d(3%, -2%, 0) scale(1.05); opacity: 0.75; }
+  100% { transform: translate3d(-2%, 3%, 0) scale(1.02); opacity: 0.6; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[formatPulse_12s_ease-in-out_infinite_alternate\] { animation: none; }
+}
+
 /* scroll-behavior: smooth removed from html — handled by JS for anchor links
    to avoid interfering with page navigation scroll reset */
 
