@@ -9,7 +9,21 @@ import RevealOnScroll from "./RevealOnScroll";
 //   Neon  (Hype Creator)→ the pink/shorts character
 //   Shadow (Strategist) → the blue commanding axolotl
 //   Bloom (Creative)    → the paint-splattered artist
-const characters = [
+type Character = {
+  name: string;
+  role: string;
+  description: string;
+  /** Small preview clip shown inside the character card. */
+  video: string;
+  /**
+   * Optional featured clip displayed below the card. Add a file path
+   * here once a character-specific showcase video is ready. If omitted,
+   * a "coming soon" placeholder renders in its place.
+   */
+  featuredVideo?: string;
+};
+
+const characters: Character[] = [
   {
     name: "Axo Prime",
     role: "The Commander",
@@ -44,7 +58,7 @@ function CharacterCard({
   char,
   delay,
 }: {
-  char: (typeof characters)[0];
+  char: Character;
   delay: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -91,41 +105,101 @@ function CharacterCard({
   };
 
   return (
-    <RevealOnScroll
-      delay={delay}
-      className="group flex flex-col sm:flex-row gap-6 p-6 rounded-[2rem] bg-surface border border-border/50 hover:border-accent/20 transition-colors cursor-pointer"
-    >
-      <div
-        className="w-full sm:w-48 h-56 sm:h-48 rounded-2xl bg-surface-elevated border border-border/30 flex-shrink-0 overflow-hidden relative"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <video
-          ref={videoRef}
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+    <RevealOnScroll delay={delay} className="flex flex-col gap-4">
+      {/* Card: preview + name/role/description */}
+      <div className="group flex flex-col sm:flex-row gap-6 p-6 rounded-[2rem] bg-surface border border-border/50 hover:border-accent/20 transition-colors cursor-pointer">
+        <div
+          className="w-full sm:w-48 h-56 sm:h-48 rounded-2xl bg-surface-elevated border border-border/30 flex-shrink-0 overflow-hidden relative"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
-          <source src={char.video} type="video/mp4" />
-        </video>
-        {/* Subtle play hint on hover */}
-        <div className="absolute inset-0 bg-background/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          <video
+            ref={videoRef}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          >
+            <source src={char.video} type="video/mp4" />
+          </video>
+          {/* Subtle play hint on hover */}
+          <div className="absolute inset-0 bg-background/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        </div>
+
+        <div className="flex flex-col justify-center">
+          <span className="text-accent text-xs font-mono tracking-wider uppercase mb-1">
+            {char.role}
+          </span>
+          <h3 className="text-xl font-semibold tracking-tight text-foreground mb-2">
+            {char.name}
+          </h3>
+          <p className="text-muted text-sm leading-relaxed">
+            {char.description}
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col justify-center">
-        <span className="text-accent text-xs font-mono tracking-wider uppercase mb-1">
-          {char.role}
-        </span>
-        <h3 className="text-xl font-semibold tracking-tight text-foreground mb-2">
-          {char.name}
-        </h3>
-        <p className="text-muted text-sm leading-relaxed">
-          {char.description}
-        </p>
-      </div>
+      {/* Featured video below the card — populated per character as
+          showcase clips land. Placeholder shows until then. */}
+      <FeaturedVideo char={char} />
     </RevealOnScroll>
+  );
+}
+
+/**
+ * Per-character featured video. Autoplays when scrolled into view
+ * (IntersectionObserver). If featuredVideo is missing, renders a
+ * "coming soon" placeholder so the layout stays consistent.
+ */
+function FeaturedVideo({ char }: { char: Character }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        }
+      },
+      { threshold: 0.25 }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  if (!char.featuredVideo) {
+    return (
+      <div className="aspect-video w-full rounded-2xl bg-surface/50 border border-dashed border-border/60 flex items-center justify-center">
+        <div className="text-center px-6">
+          <p className="text-muted text-xs font-mono tracking-wider uppercase mb-1">
+            {char.name} — Featured Video
+          </p>
+          <p className="text-muted/60 text-xs">Coming soon</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="aspect-video w-full rounded-2xl overflow-hidden border border-border/50 bg-surface">
+      <video
+        ref={videoRef}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        className="w-full h-full object-cover"
+      >
+        <source src={char.featuredVideo} type="video/mp4" />
+      </video>
+    </div>
   );
 }
 
