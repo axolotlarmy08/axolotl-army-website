@@ -17,42 +17,39 @@ export default function Hero() {
 
   return (
     <>
-      {/* ── Video hero (full viewport, nothing over the video) ── */}
-      <section className="relative min-h-[100dvh] overflow-hidden">
-        {/* Video — oversized container (-15% top/bottom) so nothing clips
-            during the 3D rotation. object-cover fills the viewport. */}
-        <div
-          className="absolute left-0 right-0"
+      {/* ── Video hero ──
+           Section is aspect-square (width = height) so the 1280×1280
+           video fills it EXACTLY with object-cover — zero crop. On wide
+           monitors this extends below the fold; user scrolls past it. */}
+      <section className="relative w-full aspect-square max-h-[100vw] overflow-hidden">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover object-[center_55%]"
           style={{
-            top: "-35%",
-            bottom: "-35%",
-            maskImage:
-              "linear-gradient(to bottom, transparent 0%, black 6%, black 90%, transparent 100%)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, black 6%, black 90%, transparent 100%)",
+            filter: "brightness(1.3) contrast(1.05) saturate(1.2)",
           }}
         >
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover object-[center_35%]"
-            style={{
-              filter: "brightness(1.9) contrast(1.15) saturate(1.4)",
-            }}
-          >
-            <source src="/videos/hero.mp4" type="video/mp4" />
-          </video>
-        </div>
+          <source src="/videos/hero.mp4" type="video/mp4" />
+        </video>
 
-        {/* Spotlight glow — radial highlight at center so the 3D text pops */}
+        {/* Spotlight glow */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 70% 60% at 50% 45%, rgba(34,211,238,0.08) 0%, transparent 70%)",
+              "radial-gradient(ellipse 70% 60% at 50% 45%, rgba(34,211,238,0.1) 0%, transparent 70%)",
+          }}
+        />
+
+        {/* Bottom fade into next section */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[15%] pointer-events-none"
+          style={{
+            background: "linear-gradient(to top, var(--background) 0%, transparent 100%)",
           }}
         />
 
