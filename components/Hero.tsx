@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowDown } from "@phosphor-icons/react";
 
 const PORTAL_LINK = "/portal-coming-soon";
 
@@ -17,17 +16,17 @@ export default function Hero() {
 
   return (
     <>
-      {/* ── Video hero — ORIGINAL layout that worked ── */}
+      {/* ── Video hero — restored to the exact original full-screen layout ── */}
       <section className="relative min-h-[100dvh] flex items-center">
         <div
           className="absolute left-0 right-0"
           style={{
-            top: "-30%",
-            bottom: "-30%",
+            top: "-15%",
+            bottom: "-15%",
             maskImage:
-              "linear-gradient(to bottom, transparent 0%, black 5%, black 85%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, black 5%, black 85%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
           }}
         >
           <video
@@ -36,17 +35,18 @@ export default function Hero() {
             loop
             playsInline
             preload="auto"
-            className="w-full h-full object-contain"
-            style={{ filter: "brightness(1.65)" }}
+            className="w-full h-full object-cover"
+            style={{
+              filter: "brightness(1.35)",
+              objectPosition: "center 55%",
+            }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
         </div>
-
-        {/* Scroll indicator removed — text section below makes scrolling obvious */}
       </section>
 
-      {/* ── Hero text (below video, on solid bg) ── */}
+      {/* ── Hero text (below video) ── */}
       <section className="py-16 md:py-24 px-6">
         <div className="max-w-[1400px] mx-auto">
           <div className="max-w-2xl">
