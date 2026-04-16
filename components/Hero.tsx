@@ -31,7 +31,7 @@ export default function Hero() {
           className="absolute inset-0 w-full h-full object-cover"
           style={{
             filter: "brightness(1.3) contrast(1.05) saturate(1.2)",
-            transform: "translateY(-24%) scale(1.48)",
+            transform: "translateY(-72%) scale(2.44)",
           }}
         >
           <source src="/videos/hero.mp4" type="video/mp4" />
