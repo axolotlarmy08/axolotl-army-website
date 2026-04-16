@@ -24,12 +24,12 @@ export default function Hero() {
         <div
           className="absolute left-0 right-0"
           style={{
-            top: "-15%",
-            bottom: "-15%",
+            top: "-25%",
+            bottom: "-25%",
             maskImage:
-              "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, black 6%, black 90%, transparent 100%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, black 6%, black 90%, transparent 100%)",
           }}
         >
           <video
@@ -39,11 +39,22 @@ export default function Hero() {
             playsInline
             preload="auto"
             className="w-full h-full object-cover"
-            style={{ filter: "brightness(1.35)" }}
+            style={{
+              filter: "brightness(1.6) contrast(1.05)",
+            }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
         </div>
+
+        {/* Spotlight glow — radial highlight at center so the 3D text pops */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 60% at 50% 45%, rgba(34,211,238,0.08) 0%, transparent 70%)",
+          }}
+        />
 
         {/* Scroll indicator */}
         <motion.div
