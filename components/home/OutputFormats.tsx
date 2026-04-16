@@ -27,6 +27,12 @@ interface FormatCard {
    * the card is about (e.g. character consistency demo).
    */
   videoSrc?: string;
+  /**
+   * Optional YouTube embed ID. When set, renders a muted autoplay loop
+   * iframe instead of a local <video>. Use for clips that live on YouTube
+   * and shouldn't be duplicated locally.
+   */
+  youtubeId?: string;
 }
 
 const cards: FormatCard[] = [
@@ -39,6 +45,7 @@ const cards: FormatCard[] = [
     href: "/showreel",
     gradient:
       "linear-gradient(135deg, color-mix(in oklab, var(--axo-pink) 45%, transparent) 0%, color-mix(in oklab, var(--axo-gold) 25%, transparent) 60%, transparent 100%)",
+    youtubeId: "zq4nyvVuNLY",
   },
   {
     icon: FilmSlate,
@@ -93,8 +100,7 @@ function Card({ card, delay }: { card: FormatCard; delay: number }) {
         {...wrapperProps}
         className="group relative block rounded-[2rem] border border-border/60 hover:border-accent/40 transition-all duration-300 overflow-hidden bg-surface/50"
       >
-        {/* Optional background video. Layered at full-cover with a dark
-            scrim on top so the card copy stays legible. */}
+        {/* Optional background video — local file or YouTube embed. */}
         {card.videoSrc && (
           <video
             ref={videoRef}
@@ -107,6 +113,15 @@ function Card({ card, delay }: { card: FormatCard; delay: number }) {
             <source src={card.videoSrc} type="video/mp4" />
           </video>
         )}
+        {card.youtubeId && (
+          <iframe
+            src={`https://www.youtube.com/embed/${card.youtubeId}?autoplay=1&mute=1&loop=1&controls=0&showinfo=0&rel=0&playlist=${card.youtubeId}&playsinline=1&modestbranding=1`}
+            allow="autoplay; encrypted-media"
+            className="absolute inset-0 w-full h-full object-cover scale-[1.35] opacity-80 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+            style={{ border: "none" }}
+            title="Short-form demo"
+          />
+        )}
 
         {/* Animated glow — two layered gradients, one slowly drifting.
             Dimmed further when a video is present so it reads as a tint
@@ -114,13 +129,13 @@ function Card({ card, delay }: { card: FormatCard; delay: number }) {
         <div
           aria-hidden
           className={`absolute inset-0 transition-opacity duration-700 ${
-            card.videoSrc
+            card.videoSrc || card.youtubeId
               ? "opacity-30 group-hover:opacity-20"
               : "opacity-80 group-hover:opacity-100"
           }`}
           style={{ background: card.gradient }}
         />
-        {!card.videoSrc && (
+        {!card.videoSrc && !card.youtubeId && (
           <div
             aria-hidden
             className="absolute -inset-24 opacity-60 blur-3xl animate-[formatPulse_12s_ease-in-out_infinite_alternate]"
@@ -132,7 +147,7 @@ function Card({ card, delay }: { card: FormatCard; delay: number }) {
         <div
           aria-hidden
           className={`absolute inset-0 ${
-            card.videoSrc
+            card.videoSrc || card.youtubeId
               ? "bg-gradient-to-t from-background/90 via-background/55 to-background/20"
               : "bg-gradient-to-br from-background/40 via-background/60 to-background/80"
           }`}
