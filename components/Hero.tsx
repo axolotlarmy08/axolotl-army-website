@@ -35,9 +35,9 @@ export default function Hero() {
           className="relative w-full h-full flex items-center justify-center"
           style={{
             maskImage:
-              "radial-gradient(ellipse 52% 58% at 50% 48%, black 40%, transparent 80%)",
+              "radial-gradient(ellipse 48% 50% at 50% 48%, black 30%, transparent 70%)",
             WebkitMaskImage:
-              "radial-gradient(ellipse 52% 58% at 50% 48%, black 40%, transparent 80%)",
+              "radial-gradient(ellipse 48% 50% at 50% 48%, black 30%, transparent 70%)",
           }}
         >
           <video
