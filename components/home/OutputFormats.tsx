@@ -49,6 +49,7 @@ const cards: FormatCard[] = [
     href: "/showreel",
     gradient:
       "linear-gradient(135deg, color-mix(in oklab, var(--axo-sky) 45%, transparent) 0%, color-mix(in oklab, var(--accent) 25%, transparent) 60%, transparent 100%)",
+    videoSrc: "/videos/cinematic-longform.mp4",
   },
   {
     icon: UsersThree,
