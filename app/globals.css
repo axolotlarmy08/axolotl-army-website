@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  /* Base palette — deep navy-charcoal instead of near-black, with a slight
-     blue tint across neutrals. Lighter and more tonal than the original
-     #0c0c0f / #18181b scale. */
-  --background: #0f1628;
-  --foreground: #e5e8f2;
-  --surface: #1a2238;
-  --surface-elevated: #242d47;
-  --border: #394360;
-  --muted: #a6aec6;
+  /* Base palette — Higgsfield-style near-black with a slightly warm tint
+     so the UI reads as cinematic rather than flat pure black. */
+  --background: #0f1113;
+  --foreground: #ededef;
+  --surface: #16191d;
+  --surface-elevated: #1d2126;
+  --border: #2a2f36;
+  --muted: #8b909b;
 
-  /* Primary brand accent (emerald, kept from original). */
-  --accent: #10b981;
-  --accent-dim: #059669;
+  /* Primary accent — bright cyan/turquoise, Higgsfield-style. Pops
+     against the near-black bg and reads premium + techy. */
+  --accent: #22d3ee;
+  --accent-dim: #0891b2;
 
-  /* Axolotl color variations — for section-level accent glows so each
-     section has a subtle mood without breaking the unified theme. */
-  --axo-pink: #f0a9c3;       /* leucistic pink */
-  --axo-gold: #e0c27e;       /* copper / gold */
-  --axo-lavender: #bca5e0;   /* lavender morph */
-  --axo-sky: #7eb8d4;        /* ice / blue axolotl */
+  /* Axolotl color variations still available as secondary highlights
+     where appropriate (e.g. character section, specific chips). */
+  --axo-pink: #f0a9c3;
+  --axo-gold: #e0c27e;
+  --axo-lavender: #bca5e0;
+  --axo-sky: #7eb8d4;
 }
 
 @theme inline {
@@ -44,35 +44,21 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  /* Subtle animated color wash — cycles through axolotl hues very slowly
-     (90s) so the bg gently shifts between pink/gold/lavender/sky tints
-     without being distracting. Overlaid at low opacity on top of the
-     navy-charcoal base. */
-  position: relative;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  background:
-    radial-gradient(ellipse 60% 40% at 20% 10%, color-mix(in oklab, var(--axo-pink) 18%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 90% 30%, color-mix(in oklab, var(--axo-sky) 16%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 70% 90%, color-mix(in oklab, var(--axo-lavender) 18%, transparent) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 40% at 10% 80%, color-mix(in oklab, var(--axo-gold) 14%, transparent) 0%, transparent 60%);
-  animation: axo-wash 90s ease-in-out infinite alternate;
+/* Higgsfield-style horizontal scroll row. Hide scrollbars, snap to
+   children, cap height via padding so the row doesn't jump. Used by
+   ScrollRow.tsx. */
+.scroll-row {
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-
-@keyframes axo-wash {
-  0%   { transform: translate(0, 0) scale(1); opacity: 0.9; }
-  50%  { transform: translate(-2%, 3%) scale(1.05); opacity: 1; }
-  100% { transform: translate(3%, -2%) scale(1.03); opacity: 0.85; }
+.scroll-row::-webkit-scrollbar {
+  display: none;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  body::before { animation: none; }
+.scroll-row > * {
+  scroll-snap-align: start;
 }
 
 /* scroll-behavior: smooth removed from html — handled by JS for anchor links

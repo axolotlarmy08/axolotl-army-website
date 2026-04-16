@@ -1,8 +1,8 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
 import ScrollAnimation from "@/components/ScrollAnimation";
-import FeatureStrip from "@/components/home/FeatureStrip";
-import ShowreelTeaser from "@/components/home/ShowreelTeaser";
+import StudioShowcase from "@/components/home/StudioShowcase";
+import PresetsRow from "@/components/home/PresetsRow";
 import Characters from "@/components/Characters";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
@@ -14,8 +14,8 @@ export default function Home() {
       <main>
         <Hero />
         <ScrollAnimation />
-        <FeatureStrip />
-        <ShowreelTeaser />
+        <StudioShowcase />
+        <PresetsRow />
         <Characters />
         <CTA />
       </main>
