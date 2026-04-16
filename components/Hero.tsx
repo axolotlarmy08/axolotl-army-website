@@ -16,8 +16,8 @@ export default function Hero() {
 
   return (
     <>
-      {/* ── Video hero — restored to the exact original full-screen layout ── */}
-      <section className="relative min-h-[115dvh] flex items-center">
+      <section className="relative min-h-[100dvh] flex items-center">
+        {/* Video background — oversized container so nothing clips during rotation */}
         <div
           className="absolute left-0 right-0"
           style={{
@@ -36,16 +36,14 @@ export default function Hero() {
             playsInline
             preload="auto"
             className="w-full h-full object-cover"
-            style={{
-              filter: "brightness(1.35)",
-            }}
+            style={{ filter: "brightness(1.35)" }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
         </div>
       </section>
 
-      {/* ── Hero text (below video) ── */}
+      {/* Text below video */}
       <section className="py-16 md:py-24 px-6">
         <div className="max-w-[1400px] mx-auto">
           <div className="max-w-2xl">
