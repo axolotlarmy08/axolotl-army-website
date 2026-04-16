@@ -16,29 +16,11 @@ export default function Hero() {
 
   return (
     <>
-      {/* ── Video hero ──
-           Uniform dark bg + sharp video with radial fade + glow underneath
-           so the 3D text feels like it's popping out of the screen. */}
-      <section className="relative min-h-[100dvh] overflow-hidden flex items-center justify-center bg-background">
-        {/* Glow behind the video — cyan/accent radial that gives depth,
-            like a light source behind the text pushing it toward you */}
+      <section className="relative min-h-[100dvh] flex items-center overflow-hidden">
+        {/* Video — original full-screen layout, fills edge to edge */}
         <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 60% 55% at 50% 48%, rgba(34,211,238,0.12) 0%, rgba(34,211,238,0.04) 40%, transparent 70%)",
-          }}
-        />
-
-        {/* Sharp video — radial mask fades edges into the uniform bg */}
-        <div
-          className="relative w-full h-full flex items-center justify-center"
-          style={{
-            maskImage:
-              "radial-gradient(ellipse 48% 50% at 50% 48%, black 30%, transparent 70%)",
-            WebkitMaskImage:
-              "radial-gradient(ellipse 48% 50% at 50% 48%, black 30%, transparent 70%)",
-          }}
+          className="absolute left-0 right-0"
+          style={{ top: "-15%", bottom: "-15%" }}
         >
           <video
             autoPlay
@@ -46,12 +28,40 @@ export default function Hero() {
             loop
             playsInline
             preload="auto"
-            className="max-h-[94vh] max-w-[94vw] object-contain"
-            style={{ filter: "brightness(1.45)" }}
+            className="w-full h-full object-cover"
+            style={{ filter: "brightness(1.5)" }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
         </div>
+
+        {/* Spotlight overlay — darkens everything EXCEPT an oval in the
+            center where the 3D text lives. Creates the effect of a
+            spotlight shining on the text. No visible video rectangle
+            because the darkened edges match the page bg. */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: `
+              radial-gradient(
+                ellipse 55% 55% at 50% 48%,
+                transparent 25%,
+                rgba(15,17,19,0.5) 55%,
+                rgba(15,17,19,0.85) 75%,
+                rgba(15,17,19,1) 100%
+              )
+            `,
+          }}
+        />
+
+        {/* Subtle cyan glow in the spotlight center for pop */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 50% 45% at 50% 48%, rgba(34,211,238,0.06) 0%, transparent 60%)",
+          }}
+        />
       </section>
 
       {/* Text below video */}
