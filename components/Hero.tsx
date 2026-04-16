@@ -16,27 +16,38 @@ export default function Hero() {
 
   return (
     <>
-      <section className="relative min-h-[100dvh] flex items-center">
-        {/* Video background — oversized container so nothing clips during rotation */}
-        <div
-          className="absolute left-0 right-0"
-          style={{
-            top: "-15%",
-            bottom: "-15%",
-            maskImage:
-              "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
-          }}
+      {/* ── Video hero ──
+           Two layers:
+           1. Blurred cover-scaled video fills the entire viewport (no gaps anywhere)
+           2. Sharp video on top, sized so the FULL 3D text is visible with padding
+
+           Same technique as the mobile scroll animation — atmospheric
+           backdrop behind a correctly-sized sharp foreground. */}
+      <section className="relative min-h-[100dvh] overflow-hidden">
+        {/* Layer 1: blurred backdrop — fills edge to edge, no crop visible */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ filter: "blur(30px) brightness(0.6) saturate(1.2)", transform: "scale(1.1)" }}
+          aria-hidden="true"
         >
+          <source src="/videos/hero.mp4" type="video/mp4" />
+        </video>
+
+        {/* Layer 2: sharp video — sized to show full text with breathing room */}
+        <div className="absolute inset-0 flex items-center justify-center">
           <video
             autoPlay
             muted
             loop
             playsInline
             preload="auto"
-            className="w-full h-full object-cover"
-            style={{ filter: "brightness(1.35)" }}
+            className="max-h-[92vh] max-w-[92vw] object-contain"
+            style={{ filter: "brightness(1.4)" }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
           </video>
