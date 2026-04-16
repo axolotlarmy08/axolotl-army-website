@@ -16,11 +16,25 @@ export default function Hero() {
 
   return (
     <>
-      {/* ── Video hero — full width, no gaps, no padding ── */}
-      <section className="relative min-h-[100dvh] overflow-hidden bg-background">
-        {/* Video takes full viewport width, height scales proportionally
-            (1:1 source = height equals width). Section clips to viewport.
-            The text sits in the upper-middle of the frame so it's visible. */}
+      {/* ── MOBILE: video in normal flow at natural aspect, text below ── */}
+      <section className="sm:hidden pt-16">
+        <div className="relative w-full hero-bg-mobile">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="w-full h-auto object-cover"
+            style={{ filter: "brightness(1.35)" }}
+          >
+            <source src="/videos/hero.mp4" type="video/mp4" />
+          </video>
+        </div>
+      </section>
+
+      {/* ── DESKTOP: full-screen video, unchanged from current ── */}
+      <section className="hidden sm:block relative min-h-[100dvh] overflow-hidden bg-background">
         <video
           autoPlay
           muted
@@ -34,8 +48,8 @@ export default function Hero() {
         </video>
       </section>
 
-      {/* Text below video */}
-      <section className="py-16 md:py-24 px-6">
+      {/* Text below video (both mobile + desktop) */}
+      <section className="py-10 sm:py-16 md:py-24 px-6">
         <div className="max-w-[1400px] mx-auto">
           <div className="max-w-2xl">
             <motion.div
