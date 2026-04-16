@@ -28,7 +28,7 @@ export default function Hero() {
           loop
           playsInline
           preload="auto"
-          className="absolute inset-0 w-full h-full object-cover object-[center_75%]"
+          className="absolute inset-0 w-full h-full object-cover object-[center_65%]"
           style={{
             filter: "brightness(1.3) contrast(1.05) saturate(1.2)",
           }}
