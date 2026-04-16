@@ -4,16 +4,16 @@ import { useEffect, useLayoutEffect } from "react";
 import { usePathname } from "next/navigation";
 
 /**
- * Force every navigation and every page refresh to start at the top
- * (or at the hash target if there is one). Works around:
- *   - Browsers restoring scroll position after refresh.
- *   - Layout shifts from lazy-loaded videos / images pushing the
- *     viewport down after an "instant" scrollTo(0).
+ * Force every page load — including refresh — to start at the top.
+ *
+ * Hash-based scrolling (e.g. /#characters) is handled ONLY by the Nav
+ * component's onClick when the user explicitly clicks a link. On refresh
+ * we always go to the top, even if the URL contains a hash, because the
+ * user expects "refresh = start over" not "refresh = jump to a section".
  */
 export default function ScrollToTop() {
   const pathname = usePathname();
 
-  // Run as early as possible on the client so the first frame is at the top.
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
     if ("scrollRestoration" in window.history) {
@@ -21,19 +21,13 @@ export default function ScrollToTop() {
     }
   }, []);
 
+  // On every route change or initial load: strip hash + scroll to top.
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash) {
-      // Let the DOM settle, then scroll to the hash target.
-      const t = window.setTimeout(() => {
-        const el = document.querySelector(hash);
-        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 80);
-      return () => window.clearTimeout(t);
+    // Strip hash from URL silently so future refreshes don't re-anchor.
+    if (window.location.hash) {
+      window.history.replaceState(null, "", pathname);
     }
 
-    // Jump to top immediately, then re-assert after layout has settled
-    // (videos autoplaying / images loading can otherwise push the page).
     const jump = () => window.scrollTo(0, 0);
     jump();
     const r1 = requestAnimationFrame(jump);
