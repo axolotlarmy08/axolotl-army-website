@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { DeviceMobile, FilmSlate, UsersThree, ArrowRight } from "@phosphor-icons/react";
 import Link from "next/link";
 import RevealOnScroll from "../RevealOnScroll";
@@ -20,6 +21,12 @@ interface FormatCard {
   href?: string;
   /** Tailwind/style gradient for the card bg. Use color-mix for axo tokens. */
   gradient: string;
+  /**
+   * Optional background video source. When set, the card renders the video
+   * behind the gradient at reduced opacity so the motion reinforces what
+   * the card is about (e.g. character consistency demo).
+   */
+  videoSrc?: string;
 }
 
 const cards: FormatCard[] = [
@@ -52,6 +59,7 @@ const cards: FormatCard[] = [
     href: "/#characters",
     gradient:
       "linear-gradient(135deg, color-mix(in oklab, var(--axo-lavender) 45%, transparent) 0%, color-mix(in oklab, var(--axo-pink) 20%, transparent) 60%, transparent 100%)",
+    videoSrc: "/videos/character-consistency.mp4",
   },
 ];
 
@@ -60,27 +68,73 @@ function Card({ card, delay }: { card: FormatCard; delay: number }) {
   const Wrapper: React.ElementType = card.href ? Link : "div";
   const wrapperProps = card.href ? { href: card.href } : {};
 
+  // Background video plays only while the card is on-screen.
+  const videoRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) video.play().catch(() => {});
+          else video.pause();
+        }
+      },
+      { threshold: 0.25 }
+    );
+    obs.observe(video);
+    return () => obs.disconnect();
+  }, []);
+
   return (
     <RevealOnScroll delay={delay}>
       <Wrapper
         {...wrapperProps}
         className="group relative block rounded-[2rem] border border-border/60 hover:border-accent/40 transition-all duration-300 overflow-hidden bg-surface/50"
       >
-        {/* Animated glow — two layered gradients, one slowly drifting */}
+        {/* Optional background video. Layered at full-cover with a dark
+            scrim on top so the card copy stays legible. */}
+        {card.videoSrc && (
+          <video
+            ref={videoRef}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+          >
+            <source src={card.videoSrc} type="video/mp4" />
+          </video>
+        )}
+
+        {/* Animated glow — two layered gradients, one slowly drifting.
+            Dimmed further when a video is present so it reads as a tint
+            rather than covering the video. */}
         <div
           aria-hidden
-          className="absolute inset-0 opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+          className={`absolute inset-0 transition-opacity duration-700 ${
+            card.videoSrc
+              ? "opacity-30 group-hover:opacity-20"
+              : "opacity-80 group-hover:opacity-100"
+          }`}
           style={{ background: card.gradient }}
         />
+        {!card.videoSrc && (
+          <div
+            aria-hidden
+            className="absolute -inset-24 opacity-60 blur-3xl animate-[formatPulse_12s_ease-in-out_infinite_alternate]"
+            style={{ background: card.gradient }}
+          />
+        )}
+        {/* Dark base for legibility. Stronger (more opaque) when a video
+            is behind it so the text holds up over motion. */}
         <div
           aria-hidden
-          className="absolute -inset-24 opacity-60 blur-3xl animate-[formatPulse_12s_ease-in-out_infinite_alternate]"
-          style={{ background: card.gradient }}
-        />
-        {/* Dark base under the glow for legibility */}
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-gradient-to-br from-background/40 via-background/60 to-background/80"
+          className={`absolute inset-0 ${
+            card.videoSrc
+              ? "bg-gradient-to-t from-background/90 via-background/55 to-background/20"
+              : "bg-gradient-to-br from-background/40 via-background/60 to-background/80"
+          }`}
         />
 
         {/* Content */}
