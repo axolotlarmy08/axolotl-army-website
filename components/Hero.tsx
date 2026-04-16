@@ -17,7 +17,7 @@ export default function Hero() {
   return (
     <>
       {/* ── Video hero — restored to the exact original full-screen layout ── */}
-      <section className="relative min-h-[100dvh] flex items-center">
+      <section className="relative min-h-[115dvh] flex items-center">
         <div
           className="absolute left-0 right-0"
           style={{
@@ -38,7 +38,6 @@ export default function Hero() {
             className="w-full h-full object-cover"
             style={{
               filter: "brightness(1.35)",
-              objectPosition: "center 55%",
             }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
