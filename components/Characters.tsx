@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import RevealOnScroll from "./RevealOnScroll";
 
 // Videos rotated counter-clockwise one position relative to the original
@@ -48,6 +48,34 @@ function CharacterCard({
   delay: number;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Mobile: autoplay the card's video when it scrolls into view, pause when
+  // it leaves. Desktop keeps the hover-to-play UX below. Detection is via
+  // matchMedia on hover capability (no hover = touch device = autoplay).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const canHover = window.matchMedia("(hover: hover)").matches;
+    if (canHover) return; // desktop — hover handlers take over
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        }
+      },
+      { threshold: 0.25 }
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
 
   const handleMouseEnter = () => {
     const video = videoRef.current;
