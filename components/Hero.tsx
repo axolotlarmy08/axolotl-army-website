@@ -38,8 +38,17 @@ export default function Hero() {
           <source src="/videos/hero.mp4" type="video/mp4" />
         </video>
 
-        {/* Layer 2: sharp video — sized to show full text with breathing room */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        {/* Layer 2: sharp video — sized to show full text, radial mask fades
+             edges into the blurred backdrop so there's no visible box */}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            maskImage:
+              "radial-gradient(ellipse 75% 80% at 50% 48%, black 50%, transparent 100%)",
+            WebkitMaskImage:
+              "radial-gradient(ellipse 75% 80% at 50% 48%, black 50%, transparent 100%)",
+          }}
+        >
           <video
             autoPlay
             muted
