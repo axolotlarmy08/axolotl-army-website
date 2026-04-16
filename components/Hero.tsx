@@ -24,8 +24,8 @@ export default function Hero() {
         <div
           className="absolute left-0 right-0"
           style={{
-            top: "-25%",
-            bottom: "-25%",
+            top: "-35%",
+            bottom: "-35%",
             maskImage:
               "linear-gradient(to bottom, transparent 0%, black 6%, black 90%, transparent 100%)",
             WebkitMaskImage:
@@ -40,7 +40,7 @@ export default function Hero() {
             preload="auto"
             className="w-full h-full object-cover"
             style={{
-              filter: "brightness(1.6) contrast(1.05)",
+              filter: "brightness(1.7) contrast(1.1) saturate(1.35)",
             }}
           >
             <source src="/videos/hero.mp4" type="video/mp4" />
