@@ -17,41 +17,31 @@ export default function Hero() {
 
   return (
     <>
-      {/* ── Video hero ──
-           100dvh section. The 1280×1280 square video is cover-scaled to
-           fill the wide viewport, and object-position shifts the focal
-           point up so "AXOLOTL" sits near the top, not the middle. */}
-      <section className="relative w-full min-h-[100dvh] overflow-hidden">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          className="absolute inset-0 w-full h-full object-cover object-[center_60%]"
+      {/* ── Video hero — ORIGINAL layout that worked ── */}
+      <section className="relative min-h-[100dvh] flex items-center">
+        <div
+          className="absolute left-0 right-0"
           style={{
-            filter: "brightness(1.3) contrast(1.05) saturate(1.2)",
+            top: "-15%",
+            bottom: "-15%",
+            maskImage:
+              "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, transparent 0%, black 8%, black 55%, transparent 100%)",
           }}
         >
-          <source src="/videos/hero.mp4" type="video/mp4" />
-        </video>
-
-        {/* Spotlight glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 60% at 50% 45%, rgba(34,211,238,0.1) 0%, transparent 70%)",
-          }}
-        />
-
-        {/* Bottom fade into next section */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-[15%] pointer-events-none"
-          style={{
-            background: "linear-gradient(to top, var(--background) 0%, transparent 100%)",
-          }}
-        />
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover"
+            style={{ filter: "brightness(1.35)" }}
+          >
+            <source src="/videos/hero.mp4" type="video/mp4" />
+          </video>
+        </div>
 
         {/* Scroll indicator */}
         <motion.div
