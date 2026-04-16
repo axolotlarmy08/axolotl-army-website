@@ -16,50 +16,44 @@ export default function Hero() {
 
   return (
     <>
-      <section className="relative min-h-[100dvh] flex items-center overflow-hidden">
-        {/* Video — original full-screen layout, fills edge to edge */}
-        <div
-          className="absolute left-0 right-0"
-          style={{ top: "-15%", bottom: "-15%" }}
+      <section className="relative min-h-[100dvh] overflow-hidden flex items-center justify-center bg-background">
+        {/* Video — contain-scaled so full text is visible at correct size */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          className="max-h-[94vh] max-w-[94vw] object-contain"
+          style={{ filter: "brightness(1.45)" }}
         >
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
-            className="w-full h-full object-cover"
-            style={{ filter: "brightness(1.5)" }}
-          >
-            <source src="/videos/hero.mp4" type="video/mp4" />
-          </video>
-        </div>
+          <source src="/videos/hero.mp4" type="video/mp4" />
+        </video>
 
-        {/* Spotlight overlay — darkens everything EXCEPT an oval in the
-            center where the 3D text lives. Creates the effect of a
-            spotlight shining on the text. No visible video rectangle
-            because the darkened edges match the page bg. */}
+        {/* Spotlight overlay ON TOP — hides the video rectangle edges
+            by darkening them to page bg color. Creates an oval spotlight
+            effect around the text. */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background: `
               radial-gradient(
-                ellipse 55% 55% at 50% 48%,
-                transparent 25%,
-                rgba(15,17,19,0.5) 55%,
-                rgba(15,17,19,0.85) 75%,
+                ellipse 50% 52% at 50% 48%,
+                transparent 35%,
+                rgba(15,17,19,0.55) 55%,
+                rgba(15,17,19,0.88) 72%,
                 rgba(15,17,19,1) 100%
               )
             `,
           }}
         />
 
-        {/* Subtle cyan glow in the spotlight center for pop */}
+        {/* Cyan glow in the spotlight center */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 50% 45% at 50% 48%, rgba(34,211,238,0.06) 0%, transparent 60%)",
+              "radial-gradient(ellipse 45% 42% at 50% 48%, rgba(34,211,238,0.07) 0%, transparent 55%)",
           }}
         />
       </section>
