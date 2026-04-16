@@ -18,20 +18,19 @@ export default function Hero() {
   return (
     <>
       {/* ── Video hero ──
-           Section is aspect-square (width = height) so the 1280×1280
-           video fills it EXACTLY with object-cover — zero crop. On wide
-           monitors this extends below the fold; user scrolls past it. */}
-      <section className="relative w-full aspect-square max-h-[100vw] overflow-hidden">
+           100dvh section. The 1280×1280 square video is cover-scaled to
+           fill the wide viewport, and object-position shifts the focal
+           point up so "AXOLOTL" sits near the top, not the middle. */}
+      <section className="relative w-full min-h-[100dvh] overflow-hidden">
         <video
           autoPlay
           muted
           loop
           playsInline
           preload="auto"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-[center_25%]"
           style={{
             filter: "brightness(1.3) contrast(1.05) saturate(1.2)",
-            transform: "translateY(-72%) scale(2.44)",
           }}
         >
           <source src="/videos/hero.mp4" type="video/mp4" />
