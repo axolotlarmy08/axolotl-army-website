@@ -27,7 +27,7 @@ export default function Hero() {
           loop
           playsInline
           preload="auto"
-          className="w-full h-auto min-h-[100dvh] object-cover"
+          className="w-full h-auto min-h-[100dvh] object-cover object-[center_30%]"
           style={{ filter: "brightness(1.5)" }}
         >
           <source src="/videos/hero.mp4" type="video/mp4" />
