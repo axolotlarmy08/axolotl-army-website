@@ -14,25 +14,25 @@ const characters = [
     name: "Axo Prime",
     role: "The Commander",
     description:
-      "The original axolotl and face of the Army. Leads every campaign from the front lines with unwavering resolve.",
+      "The face of the Army. Leads every campaign from the front lines with unwavering resolve.",
     video: "/videos/axo-neon.mp4",
   },
   {
-    name: "Axo Neon",
+    name: "Axo Flash",
     role: "The Hype Creator",
     description:
       "Electrifies every platform with high-energy content, trend-jacking, and hooks that stop the scroll.",
     video: "/videos/axo-bloom.mp4",
   },
   {
-    name: "Axo Shadow",
+    name: "Axo Edge",
     role: "The Strategist",
     description:
       "The tactical mind behind every move. Turns data into decisions and analytics into action.",
     video: "/videos/axo-prime.mp4",
   },
   {
-    name: "Axo Bloom",
+    name: "Axo Dream",
     role: "The Creative",
     description:
       "Brings the vision to life. Every story, every frame, every feeling — crafted with artistic precision.",
