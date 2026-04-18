@@ -200,11 +200,11 @@ export default function ProductDetail({ syncProductId }: Props) {
               {view === "back" ? (backIsArtwork ? "Back print" : "Back") : "Front"}
             </span>
           </div>
-          {mockupsLoading && !generatedFront && !generatedBack && (
+          {mockupsLoading && !generatedBack && (
             <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur border border-border/40">
               <SpinnerGap size={14} className="text-accent animate-spin" />
               <span className="text-[10px] uppercase tracking-wider text-muted">
-                Rendering both sides…
+                Rendering back view…
               </span>
             </div>
           )}
