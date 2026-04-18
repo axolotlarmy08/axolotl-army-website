@@ -5,9 +5,10 @@ import {
 } from "@/lib/printful";
 import { assertRetailCoversCosts } from "@/lib/margins";
 
-// Cache product data for 5 minutes
+// Cache product data for 2 minutes — short enough that newly-added Printful
+// products appear on /merch within a couple minutes of being created.
 let cache: { data: unknown; timestamp: number } | null = null;
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 2 * 60 * 1000;
 
 /**
  * Returns every live Axolotl Army product synced from Printful, grouped by
@@ -108,10 +109,16 @@ export async function GET() {
           ...colors.flatMap((c) => c.sizes.map((s) => s.retailPrice))
         );
 
+        // The store product's thumbnail_url is often the blank garment. Prefer
+        // the first variant's mockup (which has the design applied) so the
+        // grid shows the finished product, not a blank shirt/long-sleeve/etc.
+        const thumbnail =
+          colors[0]?.image || summary.thumbnail_url;
+
         return {
           syncProductId: summary.id,
           name: summary.name,
-          thumbnail: summary.thumbnail_url,
+          thumbnail,
           startingPrice: minPrice,
           colors,
         };

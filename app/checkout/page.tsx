@@ -83,7 +83,7 @@ export default function CheckoutPage() {
       <div className="min-h-[100dvh] flex items-center justify-center px-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-4">Cart is empty</h1>
-          <a href="/#merch" className="text-accent hover:underline text-sm">Browse merch</a>
+          <a href="/merch" className="text-accent hover:underline text-sm">Browse merch</a>
         </div>
       </div>
     );
@@ -96,7 +96,7 @@ export default function CheckoutPage() {
         {step !== "complete" && (
           <button
             onClick={() => {
-              if (step === "cart") window.location.href = "/#merch";
+              if (step === "cart") window.location.href = "/merch";
               else if (step === "shipping") setStep("cart");
               else if (step === "review") setStep("shipping");
             }}
@@ -171,7 +171,7 @@ export default function CheckoutPage() {
               Continue to Shipping
             </button>
             <a
-              href="/#merch"
+              href="/merch"
               className="block w-full text-center text-muted hover:text-foreground text-sm py-3 transition-colors"
             >
               Continue Shopping

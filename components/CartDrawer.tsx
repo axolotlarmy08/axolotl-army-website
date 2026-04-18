@@ -45,12 +45,7 @@ export default function CartDrawer() {
               <button
                 onClick={() => {
                   closeCart();
-                  if (window.location.pathname === "/") {
-                    const merch = document.getElementById("merch");
-                    if (merch) merch.scrollIntoView({ behavior: "smooth" });
-                  } else {
-                    window.location.href = "/#merch";
-                  }
+                  window.location.href = "/merch";
                 }}
                 className="text-accent text-sm hover:underline"
               >
@@ -156,13 +151,7 @@ export default function CartDrawer() {
             <button
               onClick={() => {
                 closeCart();
-                // If we're on the home page, scroll to merch. Otherwise navigate there.
-                if (window.location.pathname === "/") {
-                  const merch = document.getElementById("merch");
-                  if (merch) merch.scrollIntoView({ behavior: "smooth" });
-                } else {
-                  window.location.href = "/#merch";
-                }
+                window.location.href = "/merch";
               }}
               className="block w-full text-center text-muted hover:text-foreground text-sm py-2 transition-colors"
             >
