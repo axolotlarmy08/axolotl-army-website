@@ -381,8 +381,19 @@ export default function CheckoutPage() {
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-4">Order Placed</h1>
             <p className="text-muted text-lg max-w-md mx-auto mb-8">
-              Your order has been submitted. Printful will print and ship it from the facility nearest to you.
-              You&apos;ll receive tracking info at <strong className="text-foreground">{shipping.email}</strong>.
+              Your order has been submitted. Printful will print and ship it
+              from the facility nearest to you.{" "}
+              {shipping.email ? (
+                <>
+                  You&apos;ll receive tracking info at{" "}
+                  <strong className="text-foreground">{shipping.email}</strong>.
+                </>
+              ) : (
+                <>
+                  You&apos;ll receive a confirmation email and tracking info once
+                  it ships.
+                </>
+              )}
             </p>
             <a href="/" className="inline-flex items-center justify-center bg-accent text-background font-medium px-8 py-3 rounded-full hover:bg-accent-dim transition-colors">
               Back to Home
