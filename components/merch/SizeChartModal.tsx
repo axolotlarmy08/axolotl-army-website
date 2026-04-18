@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { X, SpinnerGap, Ruler } from "@phosphor-icons/react";
 
@@ -38,13 +38,20 @@ export default function SizeChartModal({
   const [chart, setChart] = useState<SizeChart | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Tracks an in-flight fetch so re-renders don't spawn duplicates and
+  // we don't accidentally cancel a request we just started.
+  const fetchedRef = useRef<{ syncProductId: number } | null>(null);
 
-  // Fetch the chart the first time the modal is opened (it's cached server-side).
+  // Fetch the chart the first time the modal is opened (cached server-side).
   useEffect(() => {
-    if (!open || chart || loading) return;
+    if (!open) return;
+    // Already fetched for this product — nothing to do.
+    if (fetchedRef.current?.syncProductId === syncProductId) return;
+    fetchedRef.current = { syncProductId };
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setChart(null);
     (async () => {
       try {
         const res = await fetch(`/api/printful/size-chart/${syncProductId}`);
@@ -60,7 +67,10 @@ export default function SizeChartModal({
     return () => {
       cancelled = true;
     };
-  }, [open, syncProductId, chart, loading]);
+    // Intentionally only keyed on open/syncProductId so fetch doesn't re-fire
+    // on every state update (setLoading/setChart would otherwise retrigger it).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, syncProductId]);
 
   // Close on Escape
   useEffect(() => {
