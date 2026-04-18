@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCatalogVariants } from "@/lib/printful";
-import { saveCatalogColorsToDb } from "@/lib/db";
+import {
+  saveCatalogColorsToDb,
+  getCatalogColorsFromDb,
+} from "@/lib/db";
+
+export async function GET(req: NextRequest) {
+  const auth = req.headers.get("authorization") || "";
+  const token = process.env.PRINTFUL_API_TOKEN;
+  if (!token || auth !== `Bearer ${token}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const url = new URL(req.url);
+  const idsParam = url.searchParams.get("ids") || "71,748,807";
+  const ids = idsParam
+    .split(",")
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((n) => Number.isFinite(n));
+  const result: Record<string, { rows: number; sample: Array<[number, string]> }> = {};
+  for (const cid of ids) {
+    const m = await getCatalogColorsFromDb(cid);
+    result[String(cid)] = {
+      rows: m.size,
+      sample: [...m.entries()].slice(0, 3),
+    };
+  }
+  return NextResponse.json({ result });
+}
 
 /**
  * Admin-only helper: force-populate the catalog-color cache in Neon for
