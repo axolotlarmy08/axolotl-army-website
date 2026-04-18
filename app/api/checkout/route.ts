@@ -25,11 +25,6 @@ interface CheckoutBody {
   email: string;
 }
 
-/**
- * Server-side lookup of every sync_variant_id the client sent.
- * Walks all store products (cached by Printful for ~1s, cheap). Returns a
- * Map keyed by sync_variant_id to the fresh retail_price and catalog id.
- */
 async function loadSyncVariants(
   syncVariantIds: number[]
 ): Promise<Map<number, SyncVariant>> {
@@ -62,18 +57,25 @@ export async function POST(req: NextRequest) {
     }
 
     const body: CheckoutBody = await req.json();
-
     if (!body.items?.length) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
-    // 1. Server-side price lookup — never trust client-sent prices
+    // 1. Server-side price + metadata lookup — never trust client-sent prices
     const ids = body.items.map((i) => i.syncVariantId);
     const variantMap = await loadSyncVariants(ids);
 
-    // 2. Build priced line items + run margin guard per line
     const intl = body.shipping.country_code !== "US";
-    let totalCents = 0;
+
+    type Line = {
+      syncVariantId: number;
+      quantity: number;
+      retail: number;
+      productName: string;
+      image?: string;
+    };
+    const lines: Line[] = [];
+
     for (const item of body.items) {
       const v = variantMap.get(item.syncVariantId);
       if (!v) {
@@ -91,12 +93,18 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      totalCents += Math.round(retail * 100) * item.quantity;
+      lines.push({
+        syncVariantId: item.syncVariantId,
+        quantity: item.quantity,
+        retail,
+        productName: v.name,
+        image: v.product?.image,
+      });
     }
 
     const stripe = getStripe()!;
 
-    // 3. Create Printful draft order with sync_variant_id (no design files needed)
+    // 2. Create Printful draft order (confirmed by webhook on payment success)
     const printfulItems: OrderItem[] = body.items.map((item) => ({
       sync_variant_id: item.syncVariantId,
       quantity: item.quantity,
@@ -104,25 +112,50 @@ export async function POST(req: NextRequest) {
     const printfulOrder = await createOrder(
       { ...body.shipping, email: body.email },
       printfulItems,
-      true // draft mode — confirmed by Stripe webhook after payment succeeds
+      true
     );
     const printfulOrderId = (printfulOrder as { id: number }).id;
 
-    // 4. Create Stripe PaymentIntent with printfulOrderId in metadata so the
-    //    webhook can confirm the right Printful order when payment succeeds.
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalCents,
-      currency: "usd",
+    // 3. Create a Stripe Checkout Session — Stripe hosts the payment page,
+    //    so card collection, 3DS, Apple Pay/Google Pay all "just work".
+    const origin =
+      req.headers.get("origin") ||
+      `https://${req.headers.get("host") || "www.axolotlarmy.net"}`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: lines.map((l) => ({
+        price_data: {
+          currency: "usd",
+          unit_amount: Math.round(l.retail * 100),
+          product_data: {
+            name: l.productName,
+            images: l.image ? [l.image] : undefined,
+          },
+        },
+        quantity: l.quantity,
+      })),
+      success_url: `${origin}/checkout?session_id={CHECKOUT_SESSION_ID}&status=success`,
+      cancel_url: `${origin}/checkout?status=cancelled`,
+      customer_email: body.email,
       metadata: {
         source: "axolotl-army-merch",
-        email: body.email,
         printfulOrderId: String(printfulOrderId),
         syncVariantIds: ids.join(","),
+      },
+      payment_intent_data: {
+        // Mirror metadata onto the PaymentIntent so the webhook can find
+        // printfulOrderId from either event source.
+        metadata: {
+          source: "axolotl-army-merch",
+          printfulOrderId: String(printfulOrderId),
+        },
       },
     });
 
     return NextResponse.json({
-      clientSecret: paymentIntent.client_secret,
+      url: session.url,
+      sessionId: session.id,
       printfulOrderId,
     });
   } catch (error) {

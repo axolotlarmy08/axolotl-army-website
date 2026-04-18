@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, ShieldCheck, Truck, Package } from "@phosphor-icons/react";
 import { useCart } from "@/components/CartProvider";
@@ -13,6 +13,26 @@ export default function CheckoutPage() {
   const { cart, total, removeItem, updateQuantity, clearCart } = useCart();
 
   const [step, setStep] = useState<Step>("cart");
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  // Stripe redirect handling — when a buyer returns from the Stripe Checkout
+  // page, the URL contains ?status=success|cancelled. Clear the cart on
+  // success and show the confirmation step.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (status === "success") {
+      clearCart();
+      setStep("complete");
+    } else if (status === "cancelled") {
+      setCheckoutError(
+        "Payment was cancelled. Your cart is still here — try again when you're ready."
+      );
+    }
+    // Only run once on mount; clearCart is stable (memoized in provider).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [shipping, setShipping] = useState({
     name: "",
     email: "",
@@ -41,6 +61,7 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     setSubmitting(true);
+    setCheckoutError(null);
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -63,17 +84,18 @@ export default function CheckoutPage() {
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Order failed");
+      const data = await res.json();
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || "Checkout failed");
       }
-
-      clearCart();
-      setStep("complete");
+      // Redirect to Stripe's hosted payment page. Buyer returns to /checkout
+      // with ?status=success or ?status=cancelled.
+      window.location.href = data.url as string;
     } catch (err) {
       console.error(err);
-      alert("Order failed. Please try again.");
-    } finally {
+      setCheckoutError(
+        err instanceof Error ? err.message : "Checkout failed. Please try again."
+      );
       setSubmitting(false);
     }
   };
@@ -336,8 +358,14 @@ export default function CheckoutPage() {
               disabled={submitting}
               className="w-full bg-accent text-background font-medium py-3.5 rounded-full text-base hover:bg-accent-dim transition-colors active:scale-[0.98] disabled:opacity-50"
             >
-              {submitting ? "Processing..." : `Pay $${grandTotal.toFixed(2)}`}
+              {submitting ? "Redirecting to secure checkout…" : `Pay $${grandTotal.toFixed(2)}`}
             </button>
+
+            {checkoutError && (
+              <p className="text-center text-red-400 text-xs mt-3">
+                {checkoutError}
+              </p>
+            )}
 
             <p className="text-center text-muted/40 text-xs mt-3">
               Secure checkout powered by Stripe. Printed and shipped by Printful.
