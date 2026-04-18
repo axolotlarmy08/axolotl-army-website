@@ -188,6 +188,49 @@ export async function getCatalogVariants(
   return res.data;
 }
 
+/* ─── Size charts ─── */
+
+export interface SizeChartMeasurement {
+  type_label: string;
+  values: Array<{ size: string; value: string }>;
+}
+
+export interface SizeTable {
+  type: "measure_yourself" | "product_measure" | string;
+  unit: string;
+  description?: string;
+  image_url?: string;
+  image_description?: string;
+  measurements?: SizeChartMeasurement[];
+}
+
+export interface SizeChart {
+  catalog_product_id: number;
+  available_sizes: string[];
+  size_tables: SizeTable[];
+}
+
+/**
+ * Fetches Printful's per-catalog-product size chart. The `measure_yourself`
+ * table is usually the one shoppers want (body measurements to match a size).
+ * The `product_measure` table is the flat-garment dimensions.
+ */
+export async function getSizeChart(
+  catalogProductId: number
+): Promise<SizeChart | null> {
+  try {
+    const res = await apiFetch<{ result: SizeChart }>(
+      `/products/${catalogProductId}/sizes`,
+      {},
+      true
+    );
+    return res.result;
+  } catch (err) {
+    console.error(`Size chart fetch failed for ${catalogProductId}:`, err);
+    return null;
+  }
+}
+
 /* ─── Store Products (synced products with your designs) ─── */
 
 /**

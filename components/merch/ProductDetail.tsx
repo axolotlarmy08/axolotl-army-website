@@ -5,6 +5,7 @@ import Image from "next/image";
 import { SpinnerGap, ShoppingBag, CheckCircle } from "@phosphor-icons/react";
 import { useCart } from "@/components/CartProvider";
 import type { MerchProduct, ProductsApiResponse } from "@/lib/merch-types";
+import SizeChartModal, { SizeChartButton } from "./SizeChartModal";
 
 interface Props {
   syncProductId: number;
@@ -27,6 +28,7 @@ export default function ProductDetail({ syncProductId }: Props) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [view, setView] = useState<"front" | "back">("front");
+  const [sizeChartOpen, setSizeChartOpen] = useState(false);
   /**
    * Printful only ships one preview mockup per product. We call our own
    * /api/printful/mockups endpoint to generate real front + back mockups
@@ -295,9 +297,12 @@ export default function ProductDetail({ syncProductId }: Props) {
         {/* Size picker */}
         {currentColor.sizes.length > 1 && (
           <div className="mb-6">
-            <p className="text-xs uppercase tracking-wider text-muted mb-3">
-              Size
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs uppercase tracking-wider text-muted">
+                Size
+              </p>
+              <SizeChartButton onClick={() => setSizeChartOpen(true)} />
+            </div>
             <div className="flex flex-wrap gap-2">
               {currentColor.sizes.map((s) => (
                 <button
@@ -358,7 +363,22 @@ export default function ProductDetail({ syncProductId }: Props) {
         >
           ← Back to all merch
         </a>
+
+        {/* For single-size items (beanies, flip-flops, etc.) the size picker
+            above doesn't render, so expose the size chart as a small link here. */}
+        {currentColor.sizes.length <= 1 && (
+          <div className="text-center mt-2">
+            <SizeChartButton onClick={() => setSizeChartOpen(true)} />
+          </div>
+        )}
       </div>
+
+      <SizeChartModal
+        syncProductId={syncProductId}
+        productName={product.name}
+        open={sizeChartOpen}
+        onClose={() => setSizeChartOpen(false)}
+      />
     </div>
   );
 }
