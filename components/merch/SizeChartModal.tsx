@@ -90,12 +90,35 @@ export default function SizeChartModal({
 
   if (!open) return null;
 
-  // Prefer "measure_yourself" table — body measurements are what shoppers
-  // actually want. Fall back to product_measure, then whatever's first.
+  // Pick the most useful size table. Prefer "measure_yourself" (body
+  // measurements), but if it only has one populated column and there's a
+  // richer product_measure table available, fall back to that.
+  const measureYourself = chart?.size_tables.find(
+    (t) => t.type === "measure_yourself"
+  );
+  const productMeasure = chart?.size_tables.find(
+    (t) => t.type === "product_measure"
+  );
+
+  function countPopulatedColumns(t: SizeTable | undefined): number {
+    if (!t?.measurements) return 0;
+    return t.measurements.filter((m) =>
+      m.values.some((v) => v.value != null && v.value !== "")
+    ).length;
+  }
+
   const preferred =
-    chart?.size_tables.find((t) => t.type === "measure_yourself") ||
-    chart?.size_tables.find((t) => t.type === "product_measure") ||
-    chart?.size_tables[0];
+    countPopulatedColumns(measureYourself) >=
+    Math.max(countPopulatedColumns(productMeasure), 1)
+      ? measureYourself || productMeasure || chart?.size_tables[0]
+      : productMeasure || measureYourself || chart?.size_tables[0];
+
+  // Drop columns where every row is null/empty — shows "Length" alone
+  // instead of "Length | Chest (—, —, —, —)" for products whose body
+  // chart omits a measurement.
+  const populatedMeasurements = preferred?.measurements?.filter((m) =>
+    m.values.some((v) => v.value != null && v.value !== "")
+  );
 
   return (
     <div
@@ -142,18 +165,18 @@ export default function SizeChartModal({
           {preferred && (
             <div className="space-y-6">
               {preferred.image_url && (
-                <div className="rounded-2xl overflow-hidden bg-white relative aspect-[3/2]">
+                <div className="mx-auto w-full max-w-xs rounded-2xl overflow-hidden bg-white relative aspect-square">
                   <Image
                     src={preferred.image_url}
                     alt="Size measurement guide"
                     fill
-                    sizes="(max-width: 768px) 100vw, 700px"
+                    sizes="320px"
                     className="object-contain"
                   />
                 </div>
               )}
 
-              {preferred.measurements && preferred.measurements.length > 0 && (
+              {populatedMeasurements && populatedMeasurements.length > 0 && (
                 <div className="overflow-x-auto -mx-6 px-6">
                   <table className="min-w-full text-sm">
                     <thead>
@@ -161,7 +184,7 @@ export default function SizeChartModal({
                         <th className="py-2 pr-4">
                           Size ({preferred.unit})
                         </th>
-                        {preferred.measurements.map((m) => (
+                        {populatedMeasurements.map((m) => (
                           <th key={m.type_label} className="py-2 pr-4">
                             {m.type_label}
                           </th>
@@ -177,7 +200,7 @@ export default function SizeChartModal({
                           <td className="py-2.5 pr-4 font-medium text-foreground">
                             {size}
                           </td>
-                          {preferred.measurements!.map((m) => {
+                          {populatedMeasurements.map((m) => {
                             const v = m.values.find((x) => x.size === size);
                             return (
                               <td key={m.type_label} className="py-2.5 pr-4 text-muted">
