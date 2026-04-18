@@ -3,7 +3,24 @@ import { getCatalogVariants } from "@/lib/printful";
 import {
   saveCatalogColorsToDb,
   getCatalogColorsFromDb,
+  saveCatalogRegionsToDb,
 } from "@/lib/db";
+
+function extractRegions(
+  variants: Array<{
+    availability_status?: Array<{ region: string; status: string }>;
+  }>
+): string[] {
+  const regions = new Set<string>();
+  for (const v of variants) {
+    for (const s of v.availability_status || []) {
+      if (s?.region && (s.status === "in_stock" || s.status === "stocked_on_demand")) {
+        regions.add(s.region);
+      }
+    }
+  }
+  return [...regions].sort();
+}
 
 export async function GET(req: NextRequest) {
   const auth = req.headers.get("authorization") || "";
@@ -57,7 +74,7 @@ export async function POST(req: NextRequest) {
     .map((s) => parseInt(s.trim(), 10))
     .filter((n) => Number.isFinite(n));
 
-  const result: Record<string, { saved: number; error?: string }> = {};
+  const result: Record<string, { colors: number; regions: string[]; error?: string }> = {};
   for (const cid of ids) {
     try {
       const variants = await getCatalogVariants(cid);
@@ -67,10 +84,20 @@ export async function POST(req: NextRequest) {
       if (rows.length > 0) {
         await saveCatalogColorsToDb(cid, rows);
       }
-      result[String(cid)] = { saved: rows.length };
+      // Also populate fulfillment regions from the same response.
+      const regions = extractRegions(
+        variants as unknown as Array<{
+          availability_status?: Array<{ region: string; status: string }>;
+        }>
+      );
+      if (regions.length > 0) {
+        await saveCatalogRegionsToDb(cid, regions);
+      }
+      result[String(cid)] = { colors: rows.length, regions };
     } catch (err) {
       result[String(cid)] = {
-        saved: 0,
+        colors: 0,
+        regions: [],
         error: err instanceof Error ? err.message.slice(0, 200) : String(err),
       };
     }
