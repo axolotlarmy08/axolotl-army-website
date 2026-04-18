@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "files.cdn.printful.com",
       },
+      {
+        // Printful's Mockup Generator returns URLs on this S3 bucket.
+        protocol: "https",
+        hostname: "printful-upload.s3-accelerate.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "printful-upload.s3.amazonaws.com",
+      },
     ],
   },
 };
