@@ -160,6 +160,15 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Checkout error:", error);
-    return NextResponse.json({ error: "Checkout failed" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(
+      {
+        error: "Checkout failed",
+        // Only safe to echo when not in production; this is a low-traffic
+        // merch site and we need to diagnose live failures.
+        detail: msg.slice(0, 400),
+      },
+      { status: 500 }
+    );
   }
 }
