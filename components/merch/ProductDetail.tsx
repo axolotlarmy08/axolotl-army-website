@@ -20,6 +20,7 @@ export default function ProductDetail({ syncProductId }: Props) {
   >(null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [view, setView] = useState<"front" | "back">("front");
 
   useEffect(() => {
     (async () => {
@@ -38,10 +39,17 @@ export default function ProductDetail({ syncProductId }: Props) {
     return product.colors.find((c) => c.color === selectedColor) ?? null;
   }, [product, selectedColor]);
 
-  // Reset size selection whenever color changes
+  // Reset size selection whenever color changes; also reset to front view.
   useEffect(() => {
     setSelectedSyncVariantId(currentColor?.sizes[0]?.syncVariantId ?? null);
+    setView("front");
   }, [currentColor]);
+
+  const hasBack = !!currentColor?.backImage;
+  const activeImage =
+    view === "back" && currentColor?.backImage
+      ? currentColor.backImage
+      : currentColor?.image;
 
   const selectedSize = useMemo(() => {
     if (!currentColor || selectedSyncVariantId == null) return null;
@@ -95,15 +103,66 @@ export default function ProductDetail({ syncProductId }: Props) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-      {/* Image */}
-      <div className="aspect-square rounded-3xl overflow-hidden bg-surface border border-border/30 relative">
-        <Image
-          src={currentColor.image}
-          alt={`${product.name} in ${currentColor.color}`}
-          fill
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover"
-        />
+      {/* Image + Front/Back toggle */}
+      <div>
+        <div className="aspect-square rounded-3xl overflow-hidden bg-surface border border-border/30 relative">
+          <Image
+            src={activeImage || currentColor.image}
+            alt={`${product.name} in ${currentColor.color} (${view})`}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className={view === "back" ? "object-contain p-8" : "object-cover"}
+          />
+          {/* Label pill — always shows which side you're looking at */}
+          <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-background/80 backdrop-blur border border-border/40">
+            <span className="text-xs uppercase tracking-wider text-foreground font-medium">
+              {view === "back" ? "Back print" : "Front"}
+            </span>
+          </div>
+        </div>
+
+        {hasBack && (
+          <div className="flex gap-3 mt-4">
+            <button
+              onClick={() => setView("front")}
+              className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all relative ${
+                view === "front" ? "border-accent" : "border-border/30 hover:border-muted"
+              }`}
+            >
+              <Image
+                src={currentColor.image}
+                alt="Front view"
+                fill
+                sizes="120px"
+                className="object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-background/70 backdrop-blur py-1">
+                <span className="text-[10px] uppercase tracking-wider text-foreground font-medium">
+                  Front
+                </span>
+              </div>
+            </button>
+            <button
+              onClick={() => setView("back")}
+              className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all relative bg-surface ${
+                view === "back" ? "border-accent" : "border-border/30 hover:border-muted"
+              }`}
+            >
+              <Image
+                src={currentColor.backImage!}
+                alt="Back print design"
+                fill
+                sizes="120px"
+                className="object-contain p-3"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-background/70 backdrop-blur py-1">
+                <span className="text-[10px] uppercase tracking-wider text-foreground font-medium">
+                  Back print
+                </span>
+              </div>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Details */}

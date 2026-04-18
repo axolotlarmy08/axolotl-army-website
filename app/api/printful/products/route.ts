@@ -54,6 +54,7 @@ export async function GET() {
           color: string;
           colorCode: string;
           image: string;
+          backImage?: string;
           sizes: Array<{
             syncVariantId: number;
             variantId: number;
@@ -86,11 +87,13 @@ export async function GET() {
           // Falls back to the product image (blank garment) if no preview found,
           // then to the store product's thumbnail (which is usually a preview too).
           const previewFile = v.files?.find((f) => f.type === "preview");
+          const backFile = v.files?.find((f) => f.type === "back");
           const variantImage =
             previewFile?.preview_url ||
             previewFile?.url ||
             v.product?.image ||
             summary.thumbnail_url;
+          const backArt = backFile?.preview_url || backFile?.url;
 
           const key = v.color || "default";
           if (!colorGroups[key]) {
@@ -98,6 +101,7 @@ export async function GET() {
               color: v.color || "Default",
               colorCode: "#000",
               image: variantImage,
+              ...(backArt ? { backImage: backArt } : {}),
               sizes: [],
             };
           }

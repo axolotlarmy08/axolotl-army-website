@@ -66,6 +66,13 @@ export default function ProductGrid() {
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
             />
+            {p.colors.some((c) => c.backImage) && (
+              <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-background/80 backdrop-blur border border-border/40">
+                <span className="text-[10px] uppercase tracking-wider text-foreground font-medium">
+                  Front + Back
+                </span>
+              </div>
+            )}
           </div>
           <div className="px-5 py-4 flex items-center justify-between">
             <div className="min-w-0">

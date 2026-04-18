@@ -15,7 +15,10 @@ export interface MerchProduct {
 export interface MerchColor {
   color: string;
   colorCode: string;
+  /** Primary image — the design-on-garment front mockup. */
   image: string;
+  /** Back print artwork URL, when the product has a back print. Transparent-BG artwork, not a garment mockup. */
+  backImage?: string;
   sizes: MerchSize[];
 }
 
