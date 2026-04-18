@@ -182,10 +182,13 @@ export async function getCatalogProduct(
 export async function getCatalogVariants(
   productId: number
 ): Promise<CatalogVariant[]> {
-  const res = await apiFetch<{ data: CatalogVariant[] }>(
-    `/catalog-products/${productId}/catalog-variants?selling_region_name=worldwide`
-  );
-  return res.data;
+  // v1 returns ALL variants in a single response (no pagination), including
+  // color_code for every entry. v2's /catalog-variants paginates at 20/page
+  // and doesn't surface color_code for every variant we actually need.
+  const res = await apiFetch<{
+    result: { variants: CatalogVariant[] };
+  }>(`/products/${productId}`, {}, true);
+  return res.result.variants || [];
 }
 
 /* ─── Size charts ─── */
