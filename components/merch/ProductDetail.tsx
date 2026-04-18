@@ -175,14 +175,14 @@ export default function ProductDetail({ syncProductId }: Props) {
               alt={`${product.name} in ${currentColor.color} (${view})`}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              // object-contain keeps every mockup (regardless of Printful's
-              // framing) rendered at a consistent size inside the square
-              // container — no more "shirt shrinks when I click a color"
-              // surprise. Letterboxed whitespace sits on a clean white bg.
+              // object-cover fills the frame so the product dominates,
+              // matching standard e-commerce presentation. For back-print
+              // artwork (transparent PNG of the design) we keep contain + pad
+              // so the full design is always visible on the clean white bg.
               className={
                 view === "back" && backIsArtwork
                   ? "object-contain p-8"
-                  : "object-contain"
+                  : "object-cover"
               }
             />
           )}

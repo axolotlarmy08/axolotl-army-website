@@ -64,7 +64,7 @@ export default function ProductGrid() {
               alt={p.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-contain group-hover:scale-[1.02] transition-transform duration-300"
+              className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
             />
             {p.colors.some(
               (c) => c.backImage || c.imageSide === "back"
