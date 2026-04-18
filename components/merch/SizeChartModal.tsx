@@ -156,10 +156,27 @@ export default function SizeChartModal({
             <p className="text-center text-red-400 py-8">{error}</p>
           )}
 
-          {!loading && !error && !preferred && chart && (
-            <p className="text-center text-muted py-8">
-              No size chart published for this item.
-            </p>
+          {!loading && !error && chart && !preferred && (
+            <div className="text-center py-8">
+              <p className="text-foreground font-medium mb-1">
+                One size fits all
+              </p>
+              <p className="text-muted text-sm">
+                This item doesn&apos;t have a size chart — it ships as a single
+                size.
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && !chart && (
+            <div className="text-center py-8">
+              <p className="text-foreground font-medium mb-1">
+                No size chart available
+              </p>
+              <p className="text-muted text-sm">
+                Size information isn&apos;t published for this product.
+              </p>
+            </div>
           )}
 
           {preferred && (

@@ -84,20 +84,28 @@ export default function ProductDetail({ syncProductId }: Props) {
   }, [currentColor]);
 
   // Pull generated mockups for the current color, if any.
-  const colorMockups = currentColor && mockups ? mockups[currentColor.color] ?? [] : [];
-  const generatedFront = colorMockups.find((m) => m.placement === "front")?.url;
+  const colorMockups =
+    currentColor && mockups ? mockups[currentColor.color] ?? [] : [];
   const generatedBack = colorMockups.find((m) => m.placement === "back")?.url;
 
-  // Fallback (when generation hasn't finished): use whatever side the
-  // pre-generated Printful preview depicts, and the back-print artwork.
-  const fallbackFront =
-    currentColor?.imageSide === "front" ? currentColor.image : undefined;
+  // IMPORTANT: Printful's native preview (currentColor.image) reflects the
+  // exact positioning the user set in Printful's designer. Our custom
+  // mockup generator currently can't replicate that positioning, so it
+  // stretches or shrinks the design differently than intended. For the
+  // FRONT view we always use the native preview (correct by definition);
+  // for the BACK we prefer a generated on-garment mockup when available
+  // (Printful only generates one preview, whichever side has the dominant
+  // print), falling back to the raw back-print artwork.
+  const frontUrl =
+    currentColor?.imageSide === "front"
+      ? currentColor.image
+      : // If the native preview is actually the back, we don't have a front
+        // mockup — show the image anyway (same thing Printful would).
+        currentColor?.image;
   const fallbackBack =
     currentColor?.imageSide === "back"
       ? currentColor.image
       : currentColor?.backImage;
-
-  const frontUrl = generatedFront || fallbackFront;
   const backUrl = generatedBack || fallbackBack;
 
   const hasFront = !!frontUrl;

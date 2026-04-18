@@ -6,26 +6,63 @@ import {
   type CatalogVariant,
 } from "@/lib/printful";
 import { assertRetailCoversCosts } from "@/lib/margins";
+import { getCatalogColorsFromDb, saveCatalogColorsToDb } from "@/lib/db";
 
 /**
- * Per-catalog-product cache of variant_id → color_code hex. Printful's
- * sync_variant payload doesn't include color codes, so we have to call
- * /catalog-products/{id}/catalog-variants separately. That data is stable,
- * so we cache it in-memory for 24h to avoid hammering Printful.
+ * Per-catalog-product cache of variant_id → color_code hex. Printful
+ * rate-limits the catalog-variants endpoint, so we persist results in Neon
+ * (stable across Vercel cold starts). A short in-memory cache avoids
+ * repeated Neon reads during a single warm instance.
  */
-const colorCodeCache = new Map<number, { map: Map<number, string>; at: number }>();
-const COLOR_TTL_MS = 24 * 60 * 60 * 1000;
+const colorMemCache = new Map<
+  number,
+  { map: Map<number, string>; at: number }
+>();
+const COLOR_MEM_TTL_MS = 10 * 60 * 1000;
 
 async function getColorCodeMap(
   catalogProductId: number
 ): Promise<Map<number, string>> {
-  const hit = colorCodeCache.get(catalogProductId);
-  if (hit && Date.now() - hit.at < COLOR_TTL_MS) return hit.map;
+  const mem = colorMemCache.get(catalogProductId);
+  if (mem && Date.now() - mem.at < COLOR_MEM_TTL_MS) return mem.map;
+
+  // Read the persistent cache first — avoids Printful rate limits entirely
+  // on cold starts.
+  try {
+    const db = await getCatalogColorsFromDb(catalogProductId);
+    if (db.size > 0) {
+      colorMemCache.set(catalogProductId, { map: db, at: Date.now() });
+      return db;
+    }
+  } catch (err) {
+    console.error(
+      `Catalog color DB read failed for ${catalogProductId}:`,
+      err
+    );
+  }
+
+  // Not cached — fetch from Printful and persist for next time.
   const map = new Map<number, string>();
   try {
-    const variants: CatalogVariant[] = await getCatalogVariants(catalogProductId);
+    const variants: CatalogVariant[] = await getCatalogVariants(
+      catalogProductId
+    );
+    const rows: Array<{ variantId: number; colorCode: string }> = [];
     for (const v of variants) {
-      if (v.color_code) map.set(v.id, v.color_code);
+      if (v.color_code) {
+        map.set(v.id, v.color_code);
+        rows.push({ variantId: v.id, colorCode: v.color_code });
+      }
+    }
+    if (rows.length > 0) {
+      try {
+        await saveCatalogColorsToDb(catalogProductId, rows);
+      } catch (err) {
+        console.error(
+          `Catalog color DB write failed for ${catalogProductId}:`,
+          err
+        );
+      }
     }
   } catch (err) {
     console.error(
@@ -33,7 +70,7 @@ async function getColorCodeMap(
       err
     );
   }
-  colorCodeCache.set(catalogProductId, { map, at: Date.now() });
+  colorMemCache.set(catalogProductId, { map, at: Date.now() });
   return map;
 }
 

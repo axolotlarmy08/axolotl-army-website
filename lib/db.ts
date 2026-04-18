@@ -55,6 +55,19 @@ async function ensureSchema() {
     )
   `;
 
+  // Catalog color codes, persisted because Printful rate-limits the
+  // /catalog-products/:id/catalog-variants endpoint and we don't want swatches
+  // to regress to grey on every Vercel cold start.
+  await sql`
+    CREATE TABLE IF NOT EXISTS printful_catalog_colors (
+      catalog_product_id INT NOT NULL,
+      catalog_variant_id INT NOT NULL,
+      color_code TEXT NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (catalog_product_id, catalog_variant_id)
+    )
+  `;
+
   schemaInitialized = true;
 }
 
@@ -86,6 +99,40 @@ export async function saveMockupsToDb(
       VALUES (${syncProductId}, ${r.color}, ${r.placement}, ${r.url}, NOW())
       ON CONFLICT (sync_product_id, color, placement)
       DO UPDATE SET url = EXCLUDED.url, updated_at = NOW()
+    `;
+  }
+}
+
+/* ─── Printful catalog color-code cache ─── */
+
+export async function getCatalogColorsFromDb(
+  catalogProductId: number
+): Promise<Map<number, string>> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT catalog_variant_id, color_code
+    FROM printful_catalog_colors
+    WHERE catalog_product_id = ${catalogProductId}
+  `) as Array<{ catalog_variant_id: number; color_code: string }>;
+  const map = new Map<number, string>();
+  for (const r of rows) map.set(r.catalog_variant_id, r.color_code);
+  return map;
+}
+
+export async function saveCatalogColorsToDb(
+  catalogProductId: number,
+  entries: Array<{ variantId: number; colorCode: string }>
+): Promise<void> {
+  if (entries.length === 0) return;
+  await ensureSchema();
+  const sql = getSql();
+  for (const e of entries) {
+    await sql`
+      INSERT INTO printful_catalog_colors (catalog_product_id, catalog_variant_id, color_code, updated_at)
+      VALUES (${catalogProductId}, ${e.variantId}, ${e.colorCode}, NOW())
+      ON CONFLICT (catalog_product_id, catalog_variant_id)
+      DO UPDATE SET color_code = EXCLUDED.color_code, updated_at = NOW()
     `;
   }
 }
