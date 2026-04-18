@@ -91,12 +91,50 @@ interface TaskResponse {
   };
 }
 
+/**
+ * Compute width/height/top/left that fits a source image of (srcW × srcH)
+ * inside a print area of (areaW × areaH) while preserving the source's
+ * native aspect ratio. Centers the design within the area.
+ *
+ * Without this, passing width=areaW and height=areaH to Printful tells it
+ * to stretch the design to the area's aspect — which produces squished
+ * output for square designs on portrait print areas (e.g. axolotl on tee).
+ */
+function fitAspect(
+  srcW: number,
+  srcH: number,
+  areaW: number,
+  areaH: number
+): { width: number; height: number; top: number; left: number } {
+  const srcAspect = srcW / srcH;
+  const areaAspect = areaW / areaH;
+  let width: number;
+  let height: number;
+  if (srcAspect > areaAspect) {
+    // Source is wider relative to area → fit by width, letterbox top/bottom.
+    width = areaW;
+    height = areaW / srcAspect;
+  } else {
+    // Source is taller/narrower relative to area → fit by height, letterbox sides.
+    height = areaH;
+    width = areaH * srcAspect;
+  }
+  return {
+    width: Math.round(width),
+    height: Math.round(height),
+    top: Math.round((areaH - height) / 2),
+    left: Math.round((areaW - width) / 2),
+  };
+}
+
 async function createTask(
   catalogProductId: number,
   variantId: number,
   files: Array<{
     placement: string;
     image_url: string;
+    srcWidth: number;
+    srcHeight: number;
     printfileWidth: number;
     printfileHeight: number;
   }>
@@ -108,18 +146,26 @@ async function createTask(
       body: JSON.stringify({
         variant_ids: [variantId],
         format: "jpg",
-        files: files.map((f) => ({
-          placement: f.placement,
-          image_url: f.image_url,
-          position: {
-            area_width: f.printfileWidth,
-            area_height: f.printfileHeight,
-            width: f.printfileWidth,
-            height: f.printfileHeight,
-            top: 0,
-            left: 0,
-          },
-        })),
+        files: files.map((f) => {
+          const fit = fitAspect(
+            f.srcWidth,
+            f.srcHeight,
+            f.printfileWidth,
+            f.printfileHeight
+          );
+          return {
+            placement: f.placement,
+            image_url: f.image_url,
+            position: {
+              area_width: f.printfileWidth,
+              area_height: f.printfileHeight,
+              width: fit.width,
+              height: fit.height,
+              top: fit.top,
+              left: fit.left,
+            },
+          };
+        }),
       }),
     }
   );
@@ -168,6 +214,8 @@ async function generateForColor(
   const files: Array<{
     placement: string;
     image_url: string;
+    srcWidth: number;
+    srcHeight: number;
     printfileWidth: number;
     printfileHeight: number;
   }> = [];
@@ -183,6 +231,10 @@ async function generateForColor(
       files.push({
         placement: "front",
         image_url: url,
+        // Fall back to square if Printful didn't tell us the source dimensions
+        // so aspect-fit still runs (at worst we get a centered square).
+        srcWidth: front.width || 1000,
+        srcHeight: front.height || 1000,
         printfileWidth: printfileDims.width,
         printfileHeight: printfileDims.height,
       });
@@ -193,6 +245,8 @@ async function generateForColor(
       files.push({
         placement: "back",
         image_url: url,
+        srcWidth: back.width || 1000,
+        srcHeight: back.height || 1000,
         printfileWidth: printfileDims.width,
         printfileHeight: printfileDims.height,
       });

@@ -90,6 +90,22 @@ export async function saveMockupsToDb(
   }
 }
 
+/** Delete all cached mockups for a product so the next request regenerates them. */
+export async function clearMockupsFromDb(
+  syncProductId?: number
+): Promise<number> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = syncProductId
+    ? ((await sql`DELETE FROM printful_mockups WHERE sync_product_id = ${syncProductId} RETURNING 1`) as Array<{
+        "?column?": number;
+      }>)
+    : ((await sql`DELETE FROM printful_mockups RETURNING 1`) as Array<{
+        "?column?": number;
+      }>);
+  return rows.length;
+}
+
 export async function saveMerchSignup(
   email: string,
   source = "merch-section"

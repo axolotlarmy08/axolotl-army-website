@@ -126,6 +126,10 @@ export interface SyncVariantFile {
   preview_url?: string;
   /** Printful names preview files like "<product>-<color>-<side>-<hash>.jpg". */
   filename?: string;
+  /** Native pixel width of the uploaded design — used to preserve aspect ratio when positioning. */
+  width?: number;
+  /** Native pixel height of the uploaded design. */
+  height?: number;
 }
 
 export interface SyncVariant {
