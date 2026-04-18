@@ -70,7 +70,11 @@ async function getColorCodeMap(
       err
     );
   }
-  colorMemCache.set(catalogProductId, { map, at: Date.now() });
+  // Never cache an empty map — we'd serve grey swatches until the TTL
+  // elapsed. Only persist a real result.
+  if (map.size > 0) {
+    colorMemCache.set(catalogProductId, { map, at: Date.now() });
+  }
   return map;
 }
 
