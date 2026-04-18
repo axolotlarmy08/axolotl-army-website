@@ -68,6 +68,16 @@ async function ensureSchema() {
     )
   `;
 
+  // Fulfillment regions per catalog product (e.g. ["US","EU","CA"]). Stored
+  // as a comma-joined string for simplicity — product-level data, one row.
+  await sql`
+    CREATE TABLE IF NOT EXISTS printful_catalog_regions (
+      catalog_product_id INT PRIMARY KEY,
+      regions TEXT NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+
   schemaInitialized = true;
 }
 
@@ -135,6 +145,35 @@ export async function saveCatalogColorsToDb(
       DO UPDATE SET color_code = EXCLUDED.color_code, updated_at = NOW()
     `;
   }
+}
+
+/* ─── Printful catalog fulfillment-region cache ─── */
+
+export async function getCatalogRegionsFromDb(
+  catalogProductId: number
+): Promise<string[] | null> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT regions FROM printful_catalog_regions
+    WHERE catalog_product_id = ${catalogProductId}
+  `) as Array<{ regions: string }>;
+  if (rows.length === 0) return null;
+  return rows[0].regions.split(",").filter(Boolean);
+}
+
+export async function saveCatalogRegionsToDb(
+  catalogProductId: number,
+  regions: string[]
+): Promise<void> {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`
+    INSERT INTO printful_catalog_regions (catalog_product_id, regions, updated_at)
+    VALUES (${catalogProductId}, ${regions.join(",")}, NOW())
+    ON CONFLICT (catalog_product_id)
+    DO UPDATE SET regions = EXCLUDED.regions, updated_at = NOW()
+  `;
 }
 
 /** Delete all cached mockups for a product so the next request regenerates them. */

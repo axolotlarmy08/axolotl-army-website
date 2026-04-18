@@ -6,6 +6,7 @@ import { SpinnerGap, ShoppingBag, CheckCircle } from "@phosphor-icons/react";
 import { useCart } from "@/components/CartProvider";
 import type { MerchProduct, ProductsApiResponse } from "@/lib/merch-types";
 import SizeChartModal, { SizeChartButton } from "./SizeChartModal";
+import { hasNorthAmericaFulfillment } from "@/lib/shipping";
 
 interface Props {
   syncProductId: number;
@@ -187,6 +188,7 @@ export default function ProductDetail({ syncProductId }: Props) {
       price: selectedSize.retailPrice,
       quantity: qty,
       mockupUrl: currentColor.image,
+      fulfillmentRegions: product.fulfillmentRegions,
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -282,10 +284,19 @@ export default function ProductDetail({ syncProductId }: Props) {
         <p className="text-2xl font-semibold text-foreground mb-6">
           ${(selectedSize?.retailPrice ?? product.startingPrice).toFixed(2)}
         </p>
-        <p className="text-muted text-sm leading-relaxed mb-8">
+        <p className="text-muted text-sm leading-relaxed mb-3">
           Free shipping worldwide. Printed and shipped by Printful from the
           facility nearest you.
         </p>
+        {product.fulfillmentRegions.length > 0 &&
+          !hasNorthAmericaFulfillment(product.fulfillmentRegions) && (
+            <div className="mb-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30">
+              <span className="text-amber-400 text-xs font-medium">
+                Ships from Europe — allow 10–15 business days.
+              </span>
+            </div>
+          )}
+        <div className="mb-8" />
 
         {/* Color picker */}
         {product.colors.length > 1 && (

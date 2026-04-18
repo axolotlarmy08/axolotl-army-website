@@ -6,7 +6,76 @@ import {
   type CatalogVariant,
 } from "@/lib/printful";
 import { assertRetailCoversCosts } from "@/lib/margins";
-import { getCatalogColorsFromDb, saveCatalogColorsToDb } from "@/lib/db";
+import {
+  getCatalogColorsFromDb,
+  saveCatalogColorsToDb,
+  getCatalogRegionsFromDb,
+  saveCatalogRegionsToDb,
+} from "@/lib/db";
+
+/**
+ * Union of fulfillment regions across all of a catalog product's variants,
+ * extracted from the v1 /products/{id} response's availability_status arrays.
+ */
+function extractFulfillmentRegions(variants: CatalogVariant[]): string[] {
+  const regions = new Set<string>();
+  for (const v of variants) {
+    // availability_status on v1 variants is an Array<{region, status}>.
+    // We accept any non-"discontinued" status as "available in this region".
+    const as = (v as unknown as {
+      availability_status?: Array<{ region: string; status: string }>;
+    }).availability_status;
+    if (!as) continue;
+    for (const s of as) {
+      if (!s?.region) continue;
+      if (s.status === "in_stock" || s.status === "stocked_on_demand") {
+        regions.add(s.region);
+      }
+    }
+  }
+  return [...regions].sort();
+}
+
+/** Memoised fulfillment-regions lookup, Neon-backed. */
+const regionsMemCache = new Map<number, { regions: string[]; at: number }>();
+const REGIONS_MEM_TTL_MS = 15 * 60 * 1000;
+
+async function getRegionsForCatalog(
+  catalogProductId: number,
+  variants: CatalogVariant[]
+): Promise<string[]> {
+  const mem = regionsMemCache.get(catalogProductId);
+  if (mem && Date.now() - mem.at < REGIONS_MEM_TTL_MS) return mem.regions;
+
+  // Try Neon first — survives cold starts.
+  try {
+    const db = await getCatalogRegionsFromDb(catalogProductId);
+    if (db && db.length > 0) {
+      regionsMemCache.set(catalogProductId, { regions: db, at: Date.now() });
+      return db;
+    }
+  } catch (err) {
+    console.error(
+      `Region DB read failed for ${catalogProductId}:`,
+      err
+    );
+  }
+
+  // Derive from the variants we already fetched (for color codes) and persist.
+  const regions = extractFulfillmentRegions(variants);
+  if (regions.length > 0) {
+    try {
+      await saveCatalogRegionsToDb(catalogProductId, regions);
+    } catch (err) {
+      console.error(
+        `Region DB write failed for ${catalogProductId}:`,
+        err
+      );
+    }
+    regionsMemCache.set(catalogProductId, { regions, at: Date.now() });
+  }
+  return regions;
+}
 
 /**
  * Per-catalog-product cache of variant_id → color_code hex. Printful
@@ -41,7 +110,9 @@ async function getColorCodeMap(
     );
   }
 
-  // Not cached — fetch from Printful and persist for next time.
+  // Not cached — fetch from Printful and persist for next time. Since this
+  // is the most expensive call in the whole pipeline, use the same variant
+  // data to populate the fulfillment-regions cache too.
   const map = new Map<number, string>();
   try {
     const variants: CatalogVariant[] = await getCatalogVariants(
@@ -60,6 +131,22 @@ async function getColorCodeMap(
       } catch (err) {
         console.error(
           `Catalog color DB write failed for ${catalogProductId}:`,
+          err
+        );
+      }
+    }
+    // Regions — side-effect of the same data.
+    const regions = extractFulfillmentRegions(variants);
+    if (regions.length > 0) {
+      try {
+        await saveCatalogRegionsToDb(catalogProductId, regions);
+        regionsMemCache.set(catalogProductId, {
+          regions,
+          at: Date.now(),
+        });
+      } catch (err) {
+        console.error(
+          `Region DB write failed for ${catalogProductId}:`,
           err
         );
       }
@@ -148,8 +235,17 @@ export async function GET() {
     // Printful's per-endpoint burst limit. Once cached in Neon (see
     // getColorCodeMap), subsequent calls skip Printful entirely.
     const colorMapsByCatalog = new Map<number, Map<number, string>>();
+    const regionsByCatalog = new Map<number, string[]>();
     for (const cid of catalogProductIds) {
       colorMapsByCatalog.set(cid, await getColorCodeMap(cid));
+      // Regions were populated as a side-effect of getColorCodeMap. Read
+      // them from Neon (likely a hot cache hit at this point).
+      try {
+        const r = await getCatalogRegionsFromDb(cid);
+        if (r) regionsByCatalog.set(cid, r);
+      } catch {
+        /* silent — regions are nice-to-have, not essential */
+      }
       await new Promise((r) => setTimeout(r, 120));
     }
 
@@ -255,11 +351,19 @@ export async function GET() {
         const thumbnail =
           summary.thumbnail_url || colors[0]?.image || "";
 
+        // Every sync variant of a given sync product shares the same
+        // catalog product_id, so read it off the first one.
+        const catalogPid = variants[0]?.product?.product_id;
+        const fulfillmentRegions = catalogPid
+          ? regionsByCatalog.get(catalogPid) ?? []
+          : [];
+
         return {
           syncProductId: summary.id,
           name: summary.name,
           thumbnail,
           startingPrice: minPrice,
+          fulfillmentRegions,
           colors,
         };
       })

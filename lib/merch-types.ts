@@ -9,6 +9,8 @@ export interface MerchProduct {
   thumbnail: string;
   /** Cheapest variant price — used on product cards. */
   startingPrice: number;
+  /** Printful regions where this product can be fulfilled — e.g. ["US","EU","CA"]. */
+  fulfillmentRegions: string[];
   colors: MerchColor[];
 }
 

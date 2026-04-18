@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { SpinnerGap } from "@phosphor-icons/react";
 import type { MerchProduct, ProductsApiResponse } from "@/lib/merch-types";
+import { hasNorthAmericaFulfillment } from "@/lib/shipping";
 
 export default function ProductGrid() {
   const [products, setProducts] = useState<MerchProduct[] | null>(null);
@@ -75,6 +76,14 @@ export default function ProductGrid() {
                 </span>
               </div>
             )}
+            {p.fulfillmentRegions.length > 0 &&
+              !hasNorthAmericaFulfillment(p.fulfillmentRegions) && (
+                <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-amber-500/90 border border-amber-300">
+                  <span className="text-[10px] uppercase tracking-wider text-amber-950 font-semibold">
+                    Ships from EU
+                  </span>
+                </div>
+              )}
           </div>
           <div className="px-5 py-4 flex items-center justify-between">
             <div className="min-w-0">

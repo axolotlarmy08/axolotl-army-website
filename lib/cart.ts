@@ -9,6 +9,8 @@ export interface CartItem {
   characterImage: string;
   productType: string;
   productLabel: string;
+  /** Fulfillment regions from Printful — used to estimate shipping time. */
+  fulfillmentRegions?: string[];
   /**
    * Printful sync_variant_id — required. Designs are already attached to
    * the sync variant in Printful, so the order payload just references

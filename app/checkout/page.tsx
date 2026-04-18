@@ -6,6 +6,7 @@ import { ArrowLeft, ShieldCheck, Truck, Package } from "@phosphor-icons/react";
 import { useCart } from "@/components/CartProvider";
 import { countries, getRegions } from "@/lib/regions";
 import { calculateTax } from "@/lib/tax";
+import { estimateShipping, combineEstimates } from "@/lib/shipping";
 
 type Step = "cart" | "shipping" | "review" | "complete";
 
@@ -295,6 +296,22 @@ export default function CheckoutPage() {
                   <div>
                     <span className="text-sm text-foreground">{item.productLabel}</span>
                     <span className="text-xs text-muted ml-2">{item.size} / {item.color} x{item.quantity}</span>
+                    {item.fulfillmentRegions && item.fulfillmentRegions.length > 0 && (() => {
+                      const est = estimateShipping(
+                        item.fulfillmentRegions,
+                        shipping.country_code || "US"
+                      );
+                      return (
+                        <span
+                          className={`text-[11px] ml-2 ${est.isInternational ? "text-amber-400" : "text-muted"}`}
+                        >
+                          · {est.minDays}–{est.maxDays} days
+                          {est.isInternational && est.label.startsWith("Ships from")
+                            ? ` (${est.label.replace("Ships from ", "from ")})`
+                            : ""}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <span className="text-sm font-medium text-foreground">${(item.price * item.quantity).toFixed(2)}</span>
                 </div>
@@ -314,16 +331,47 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Delivery estimate */}
-            <div className="p-4 rounded-2xl bg-surface border border-border/20 mb-6">
-              <div className="flex items-center gap-3">
-                <Truck size={18} className="text-accent" />
-                <div>
-                  <p className="text-sm text-foreground">Estimated delivery: 5-11 business days</p>
-                  <p className="text-xs text-muted">Includes 2-5 days production + shipping from nearest facility</p>
+            {/* Delivery estimate — real, per cart, based on each item's
+                Printful fulfillment region vs the shipping country. */}
+            {(() => {
+              const dest = shipping.country_code || "US";
+              const estimates = cart.items
+                .filter(
+                  (i) => i.fulfillmentRegions && i.fulfillmentRegions.length > 0
+                )
+                .map((i) => estimateShipping(i.fulfillmentRegions!, dest));
+              const { minDays, maxDays, anyInternational } =
+                combineEstimates(estimates);
+              const label =
+                estimates.length === 0
+                  ? "Estimated delivery: 5–11 business days"
+                  : `Estimated delivery: ${minDays}–${maxDays} business days`;
+              return (
+                <div
+                  className={`p-4 rounded-2xl mb-6 border ${
+                    anyInternational
+                      ? "bg-amber-500/5 border-amber-500/30"
+                      : "bg-surface border-border/20"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <Truck
+                      size={18}
+                      className={anyInternational ? "text-amber-400" : "text-accent"}
+                    />
+                    <div>
+                      <p className="text-sm text-foreground">{label}</p>
+                      <p className="text-xs text-muted">
+                        Includes 2–5 days production + shipping to{" "}
+                        {dest}.{" "}
+                        {anyInternational &&
+                          "One or more items ship internationally — look for the highlighted lines above."}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })()}
 
             {/* Price breakdown */}
             <div className="p-4 rounded-2xl bg-surface border border-border/20 mb-6 space-y-2.5">
