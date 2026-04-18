@@ -280,7 +280,8 @@ export async function createOrder(
   items: OrderItem[],
   draft = true
 ) {
-  const res = await apiFetch<{ data: unknown }>(
+  // Printful v1 wraps responses as { code, result, ... } — NOT { data }.
+  const res = await apiFetch<{ result: { id: number } }>(
     "/orders",
     {
       method: "POST",
@@ -292,16 +293,16 @@ export async function createOrder(
     },
     true
   );
-  return res.data;
+  return res.result;
 }
 
 export async function confirmOrder(orderId: number) {
-  const res = await apiFetch<{ data: unknown }>(
+  const res = await apiFetch<{ result: unknown }>(
     `/orders/${orderId}/confirm`,
     { method: "POST" },
     true
   );
-  return res.data;
+  return res.result;
 }
 
 export async function getShippingRates(
