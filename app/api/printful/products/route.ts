@@ -144,12 +144,14 @@ export async function GET() {
         if (id) catalogProductIds.add(id);
       }
     }
+    // Serialize catalog-variant fetches with a tiny delay to stay well under
+    // Printful's per-endpoint burst limit. Once cached in Neon (see
+    // getColorCodeMap), subsequent calls skip Printful entirely.
     const colorMapsByCatalog = new Map<number, Map<number, string>>();
-    await Promise.all(
-      [...catalogProductIds].map(async (cid) => {
-        colorMapsByCatalog.set(cid, await getColorCodeMap(cid));
-      })
-    );
+    for (const cid of catalogProductIds) {
+      colorMapsByCatalog.set(cid, await getColorCodeMap(cid));
+      await new Promise((r) => setTimeout(r, 120));
+    }
 
     const products = details
       .filter((d): d is NonNullable<typeof d> => d !== null)
