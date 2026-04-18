@@ -10,6 +10,12 @@ interface Props {
   syncProductId: number;
 }
 
+type PlacementMockup = { placement: string; url: string };
+type MockupsResponse = {
+  byColor: Record<string, PlacementMockup[]>;
+  partial: boolean;
+};
+
 export default function ProductDetail({ syncProductId }: Props) {
   const { addItem } = useCart();
   const [product, setProduct] = useState<MerchProduct | null>(null);
@@ -21,6 +27,15 @@ export default function ProductDetail({ syncProductId }: Props) {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [view, setView] = useState<"front" | "back">("front");
+  /**
+   * Printful only ships one preview mockup per product. We call our own
+   * /api/printful/mockups endpoint to generate real front + back mockups
+   * via Printful's Mockup Generator — first load takes ~20-40s, cached after.
+   */
+  const [mockups, setMockups] = useState<
+    Record<string, PlacementMockup[]> | null
+  >(null);
+  const [mockupsLoading, setMockupsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -34,6 +49,27 @@ export default function ProductDetail({ syncProductId }: Props) {
     })();
   }, [syncProductId]);
 
+  // Kick off mockup generation/fetch once we know the product exists.
+  useEffect(() => {
+    let cancelled = false;
+    setMockupsLoading(true);
+    (async () => {
+      try {
+        const res = await fetch(`/api/printful/mockups/${syncProductId}`);
+        if (!res.ok) throw new Error("mockups failed");
+        const data: MockupsResponse = await res.json();
+        if (!cancelled) setMockups(data.byColor || {});
+      } catch {
+        if (!cancelled) setMockups({});
+      } finally {
+        if (!cancelled) setMockupsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [syncProductId]);
+
   const currentColor = useMemo(() => {
     if (!product || !selectedColor) return null;
     return product.colors.find((c) => c.color === selectedColor) ?? null;
@@ -45,30 +81,36 @@ export default function ProductDetail({ syncProductId }: Props) {
     setView("front");
   }, [currentColor]);
 
-  const hasBack = !!currentColor?.backImage;
-  const activeImage =
-    view === "back" && currentColor?.backImage
-      ? currentColor.backImage
-      : currentColor?.image;
+  // Pull generated mockups for the current color, if any.
+  const colorMockups = currentColor && mockups ? mockups[currentColor.color] ?? [] : [];
+  const generatedFront = colorMockups.find((m) => m.placement === "front")?.url;
+  const generatedBack = colorMockups.find((m) => m.placement === "back")?.url;
 
-  // Human label for the main image's side — the API tells us which side the
-  // Printful mockup actually shows (it's not always the front).
-  const mainSideLabel = (() => {
-    switch (currentColor?.imageSide) {
-      case "front":
-        return "Front";
-      case "back":
-        return "Back";
-      case "left":
-        return "Left";
-      case "right":
-        return "Right";
-      case "sleeve":
-        return "Sleeve";
-      default:
-        return "View";
-    }
-  })();
+  // Fallback (when generation hasn't finished): use whatever side the
+  // pre-generated Printful preview depicts, and the back-print artwork.
+  const fallbackFront =
+    currentColor?.imageSide === "front" ? currentColor.image : undefined;
+  const fallbackBack =
+    currentColor?.imageSide === "back"
+      ? currentColor.image
+      : currentColor?.backImage;
+
+  const frontUrl = generatedFront || fallbackFront;
+  const backUrl = generatedBack || fallbackBack;
+
+  const hasFront = !!frontUrl;
+  const hasBack = !!backUrl;
+  const activeImage =
+    view === "back" && backUrl
+      ? backUrl
+      : view === "front" && frontUrl
+        ? frontUrl
+        : // If the requested view doesn't exist, show what we have.
+          frontUrl || backUrl || currentColor?.image;
+
+  // The back thumbnail is "real" (an on-garment mockup) when generatedBack exists,
+  // otherwise we're showing the raw back-print artwork.
+  const backIsArtwork = !generatedBack && !!currentColor?.backImage;
 
   const selectedSize = useMemo(() => {
     if (!currentColor || selectedSyncVariantId == null) return null;
@@ -122,62 +164,76 @@ export default function ProductDetail({ syncProductId }: Props) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-      {/* Image + view toggle. Printful only generates one on-garment mockup
-          per product (whichever side has the print); the "Back print" thumb
-          is the raw back-design artwork, not a photo of the back of the shirt. */}
+      {/* Gallery. First page visit generates real front + back mockups via
+          Printful's Mockup Generator; we show a subtle loading state while
+          that runs, falling back to the single preview Printful already stored. */}
       <div>
         <div className="aspect-square rounded-3xl overflow-hidden bg-surface border border-border/30 relative">
-          <Image
-            src={activeImage || currentColor.image}
-            alt={`${product.name} in ${currentColor.color} (${view})`}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className={view === "back" ? "object-contain p-8" : "object-cover"}
-          />
+          {activeImage && (
+            <Image
+              src={activeImage}
+              alt={`${product.name} in ${currentColor.color} (${view})`}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className={
+                view === "back" && backIsArtwork
+                  ? "object-contain p-8"
+                  : "object-cover"
+              }
+            />
+          )}
           <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-background/80 backdrop-blur border border-border/40">
             <span className="text-xs uppercase tracking-wider text-foreground font-medium">
-              {view === "back" ? "Back print" : mainSideLabel}
+              {view === "back" ? (backIsArtwork ? "Back print" : "Back") : "Front"}
             </span>
           </div>
+          {mockupsLoading && !generatedFront && !generatedBack && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur border border-border/40">
+              <SpinnerGap size={14} className="text-accent animate-spin" />
+              <span className="text-[10px] uppercase tracking-wider text-muted">
+                Rendering both sides…
+              </span>
+            </div>
+          )}
         </div>
 
-        {hasBack && (
+        {(hasFront || hasBack) && (hasFront && hasBack) && (
           <div className="flex gap-3 mt-4">
             <button
               onClick={() => setView("front")}
-              className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all relative ${
+              disabled={!hasFront}
+              className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all relative disabled:opacity-40 ${
                 view === "front" ? "border-accent" : "border-border/30 hover:border-muted"
               }`}
             >
-              <Image
-                src={currentColor.image}
-                alt={`${mainSideLabel} view`}
-                fill
-                sizes="120px"
-                className="object-cover"
-              />
+              {frontUrl && (
+                <Image src={frontUrl} alt="Front view" fill sizes="120px" className="object-cover" />
+              )}
               <div className="absolute bottom-0 left-0 right-0 bg-background/70 backdrop-blur py-1">
                 <span className="text-[10px] uppercase tracking-wider text-foreground font-medium">
-                  {mainSideLabel}
+                  Front
                 </span>
               </div>
             </button>
             <button
               onClick={() => setView("back")}
-              className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all relative bg-surface ${
+              disabled={!hasBack}
+              className={`flex-1 aspect-square rounded-2xl overflow-hidden border-2 transition-all relative disabled:opacity-40 ${
                 view === "back" ? "border-accent" : "border-border/30 hover:border-muted"
-              }`}
+              } ${backIsArtwork ? "bg-surface" : ""}`}
             >
-              <Image
-                src={currentColor.backImage!}
-                alt="Back print design"
-                fill
-                sizes="120px"
-                className="object-contain p-3"
-              />
+              {backUrl && (
+                <Image
+                  src={backUrl}
+                  alt={backIsArtwork ? "Back print design" : "Back view"}
+                  fill
+                  sizes="120px"
+                  className={backIsArtwork ? "object-contain p-3" : "object-cover"}
+                />
+              )}
               <div className="absolute bottom-0 left-0 right-0 bg-background/70 backdrop-blur py-1">
                 <span className="text-[10px] uppercase tracking-wider text-foreground font-medium">
-                  Back print
+                  {backIsArtwork ? "Back print" : "Back"}
                 </span>
               </div>
             </button>
