@@ -168,21 +168,20 @@ export default function ProductDetail({ syncProductId }: Props) {
           Printful's Mockup Generator; we show a subtle loading state while
           that runs, falling back to the single preview Printful already stored. */}
       <div>
-        <div className="aspect-square rounded-3xl overflow-hidden bg-white border border-border/30 relative">
+        {/* Printful's mockup photos are portrait (~3:4), so a portrait
+            container displays the product at natural proportions without
+            squashing (square + cover) or letterboxing (square + contain). */}
+        <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-white border border-border/30 relative">
           {activeImage && (
             <Image
               src={activeImage}
               alt={`${product.name} in ${currentColor.color} (${view})`}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              // object-cover fills the frame so the product dominates,
-              // matching standard e-commerce presentation. For back-print
-              // artwork (transparent PNG of the design) we keep contain + pad
-              // so the full design is always visible on the clean white bg.
               className={
                 view === "back" && backIsArtwork
                   ? "object-contain p-8"
-                  : "object-cover"
+                  : "object-contain"
               }
             />
           )}
