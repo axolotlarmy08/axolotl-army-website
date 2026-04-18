@@ -5,6 +5,26 @@ import {
 } from "@/lib/printful";
 import { assertRetailCoversCosts } from "@/lib/margins";
 
+/**
+ * Printful names mockup files predictably: "<product-slug>-<color>-<SIDE>-<hash>.jpg"
+ * e.g. "unisex-staple-t-shirt-red-front-69e14..." or "youth-long-sleeve-tee-black-back-69e115...".
+ * We use that to know which side the preview actually depicts, since Printful
+ * generates the preview from whichever side has the design — not always the front.
+ */
+function detectPreviewSide(
+  filename: string | undefined
+): "front" | "back" | "left" | "right" | "sleeve" | "unknown" {
+  if (!filename) return "unknown";
+  const f = filename.toLowerCase();
+  if (/-back-/.test(f)) return "back";
+  if (/-front-/.test(f)) return "front";
+  if (/-left-/.test(f)) return "left";
+  if (/-right-/.test(f)) return "right";
+  if (/-sleeve-/.test(f)) return "sleeve";
+  return "unknown";
+}
+
+
 // Cache product data for 2 minutes — short enough that newly-added Printful
 // products appear on /merch within a couple minutes of being created.
 let cache: { data: unknown; timestamp: number } | null = null;
@@ -54,6 +74,7 @@ export async function GET() {
           color: string;
           colorCode: string;
           image: string;
+          imageSide: "front" | "back" | "left" | "right" | "sleeve" | "unknown";
           backImage?: string;
           sizes: Array<{
             syncVariantId: number;
@@ -93,15 +114,22 @@ export async function GET() {
             previewFile?.url ||
             v.product?.image ||
             summary.thumbnail_url;
+          const imageSide = detectPreviewSide(
+            previewFile?.filename as string | undefined
+          );
           const backArt = backFile?.preview_url || backFile?.url;
 
           const key = v.color || "default";
           if (!colorGroups[key]) {
+            // Only attach the back artwork thumbnail when the main image isn't
+            // already showing the back. Otherwise it's redundant.
+            const includeBack = !!backArt && imageSide !== "back";
             colorGroups[key] = {
               color: v.color || "Default",
               colorCode: "#000",
               image: variantImage,
-              ...(backArt ? { backImage: backArt } : {}),
+              imageSide,
+              ...(includeBack ? { backImage: backArt } : {}),
               sizes: [],
             };
           }

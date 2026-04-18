@@ -51,6 +51,25 @@ export default function ProductDetail({ syncProductId }: Props) {
       ? currentColor.backImage
       : currentColor?.image;
 
+  // Human label for the main image's side — the API tells us which side the
+  // Printful mockup actually shows (it's not always the front).
+  const mainSideLabel = (() => {
+    switch (currentColor?.imageSide) {
+      case "front":
+        return "Front";
+      case "back":
+        return "Back";
+      case "left":
+        return "Left";
+      case "right":
+        return "Right";
+      case "sleeve":
+        return "Sleeve";
+      default:
+        return "View";
+    }
+  })();
+
   const selectedSize = useMemo(() => {
     if (!currentColor || selectedSyncVariantId == null) return null;
     return currentColor.sizes.find(
@@ -103,7 +122,9 @@ export default function ProductDetail({ syncProductId }: Props) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
-      {/* Image + Front/Back toggle */}
+      {/* Image + view toggle. Printful only generates one on-garment mockup
+          per product (whichever side has the print); the "Back print" thumb
+          is the raw back-design artwork, not a photo of the back of the shirt. */}
       <div>
         <div className="aspect-square rounded-3xl overflow-hidden bg-surface border border-border/30 relative">
           <Image
@@ -113,10 +134,9 @@ export default function ProductDetail({ syncProductId }: Props) {
             sizes="(max-width: 768px) 100vw, 50vw"
             className={view === "back" ? "object-contain p-8" : "object-cover"}
           />
-          {/* Label pill — always shows which side you're looking at */}
           <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-background/80 backdrop-blur border border-border/40">
             <span className="text-xs uppercase tracking-wider text-foreground font-medium">
-              {view === "back" ? "Back print" : "Front"}
+              {view === "back" ? "Back print" : mainSideLabel}
             </span>
           </div>
         </div>
@@ -131,14 +151,14 @@ export default function ProductDetail({ syncProductId }: Props) {
             >
               <Image
                 src={currentColor.image}
-                alt="Front view"
+                alt={`${mainSideLabel} view`}
                 fill
                 sizes="120px"
                 className="object-cover"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-background/70 backdrop-blur py-1">
                 <span className="text-[10px] uppercase tracking-wider text-foreground font-medium">
-                  Front
+                  {mainSideLabel}
                 </span>
               </div>
             </button>

@@ -15,9 +15,11 @@ export interface MerchProduct {
 export interface MerchColor {
   color: string;
   colorCode: string;
-  /** Primary image — the design-on-garment front mockup. */
+  /** Primary image from Printful — the design-on-garment mockup, whichever side has the main design. */
   image: string;
-  /** Back print artwork URL, when the product has a back print. Transparent-BG artwork, not a garment mockup. */
+  /** Which side of the garment `image` depicts: "front" | "back" | "left" | "right" | "sleeve" | "unknown". */
+  imageSide: "front" | "back" | "left" | "right" | "sleeve" | "unknown";
+  /** Back print artwork URL (transparent-BG artwork, not a garment mockup). Only set when the product has a back print AND the main image isn't already showing the back. */
   backImage?: string;
   sizes: MerchSize[];
 }

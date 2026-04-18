@@ -124,6 +124,8 @@ export interface SyncVariantFile {
   type: string;
   url?: string;
   preview_url?: string;
+  /** Printful names preview files like "<product>-<color>-<side>-<hash>.jpg". */
+  filename?: string;
 }
 
 export interface SyncVariant {
