@@ -2,8 +2,40 @@ import { NextResponse } from "next/server";
 import {
   listStoreProducts,
   getStoreProductDetail,
+  getCatalogVariants,
+  type CatalogVariant,
 } from "@/lib/printful";
 import { assertRetailCoversCosts } from "@/lib/margins";
+
+/**
+ * Per-catalog-product cache of variant_id → color_code hex. Printful's
+ * sync_variant payload doesn't include color codes, so we have to call
+ * /catalog-products/{id}/catalog-variants separately. That data is stable,
+ * so we cache it in-memory for 24h to avoid hammering Printful.
+ */
+const colorCodeCache = new Map<number, { map: Map<number, string>; at: number }>();
+const COLOR_TTL_MS = 24 * 60 * 60 * 1000;
+
+async function getColorCodeMap(
+  catalogProductId: number
+): Promise<Map<number, string>> {
+  const hit = colorCodeCache.get(catalogProductId);
+  if (hit && Date.now() - hit.at < COLOR_TTL_MS) return hit.map;
+  const map = new Map<number, string>();
+  try {
+    const variants: CatalogVariant[] = await getCatalogVariants(catalogProductId);
+    for (const v of variants) {
+      if (v.color_code) map.set(v.id, v.color_code);
+    }
+  } catch (err) {
+    console.error(
+      `Failed to fetch catalog variants for product ${catalogProductId}:`,
+      err
+    );
+  }
+  colorCodeCache.set(catalogProductId, { map, at: Date.now() });
+  return map;
+}
 
 /**
  * Printful names mockup files predictably: "<product-slug>-<color>-<SIDE>-<hash>.jpg"
@@ -59,6 +91,23 @@ export async function GET() {
             return null;
           }
         })
+    );
+
+    // Collect every catalog product id referenced and fetch color-code maps
+    // for all of them in parallel once. Downstream lookups are then synchronous.
+    const catalogProductIds = new Set<number>();
+    for (const d of details) {
+      if (!d) continue;
+      for (const v of d.detail.sync_variants || []) {
+        const id = v.product?.product_id;
+        if (id) catalogProductIds.add(id);
+      }
+    }
+    const colorMapsByCatalog = new Map<number, Map<number, string>>();
+    await Promise.all(
+      [...catalogProductIds].map(async (cid) => {
+        colorMapsByCatalog.set(cid, await getColorCodeMap(cid));
+      })
     );
 
     const products = details
@@ -124,9 +173,15 @@ export async function GET() {
             // Only attach the back artwork thumbnail when the main image isn't
             // already showing the back. Otherwise it's redundant.
             const includeBack = !!backArt && imageSide !== "back";
+            // Look up the real color hex from the catalog; fall back to a
+            // neutral gray if Printful didn't provide one for this variant.
+            const catalogMap = v.product?.product_id
+              ? colorMapsByCatalog.get(v.product.product_id)
+              : undefined;
+            const colorCode = catalogMap?.get(v.variant_id) || "#666";
             colorGroups[key] = {
               color: v.color || "Default",
-              colorCode: "#000",
+              colorCode,
               image: variantImage,
               imageSide,
               ...(includeBack ? { backImage: backArt } : {}),

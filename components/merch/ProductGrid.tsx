@@ -58,13 +58,13 @@ export default function ProductGrid() {
           href={`/merch/${p.syncProductId}`}
           className="group rounded-3xl bg-surface border border-border/30 overflow-hidden hover:border-accent/40 transition-colors"
         >
-          <div className="aspect-square bg-surface-elevated relative overflow-hidden">
+          <div className="aspect-square bg-white relative overflow-hidden">
             <Image
               src={p.thumbnail}
               alt={p.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
+              className="object-contain group-hover:scale-[1.02] transition-transform duration-300"
             />
             {p.colors.some(
               (c) => c.backImage || c.imageSide === "back"

@@ -168,17 +168,21 @@ export default function ProductDetail({ syncProductId }: Props) {
           Printful's Mockup Generator; we show a subtle loading state while
           that runs, falling back to the single preview Printful already stored. */}
       <div>
-        <div className="aspect-square rounded-3xl overflow-hidden bg-surface border border-border/30 relative">
+        <div className="aspect-square rounded-3xl overflow-hidden bg-white border border-border/30 relative">
           {activeImage && (
             <Image
               src={activeImage}
               alt={`${product.name} in ${currentColor.color} (${view})`}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
+              // object-contain keeps every mockup (regardless of Printful's
+              // framing) rendered at a consistent size inside the square
+              // container — no more "shirt shrinks when I click a color"
+              // surprise. Letterboxed whitespace sits on a clean white bg.
               className={
                 view === "back" && backIsArtwork
                   ? "object-contain p-8"
-                  : "object-cover"
+                  : "object-contain"
               }
             />
           )}
@@ -260,20 +264,30 @@ export default function ProductDetail({ syncProductId }: Props) {
             <p className="text-xs uppercase tracking-wider text-muted mb-3">
               Color: <span className="text-foreground">{currentColor.color}</span>
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-4">
               {product.colors.map((c) => (
                 <button
                   key={c.color}
                   onClick={() => setSelectedColor(c.color)}
-                  className={`w-10 h-10 rounded-full border-2 transition-all ${
-                    c.color === selectedColor
-                      ? "border-accent scale-110"
-                      : "border-border/40 hover:border-muted"
-                  }`}
-                  style={{ backgroundColor: c.colorCode }}
+                  className="flex flex-col items-center gap-1.5 group"
                   aria-label={c.color}
-                  title={c.color}
-                />
+                >
+                  <span
+                    className={`w-10 h-10 rounded-full border-2 transition-all block ${
+                      c.color === selectedColor
+                        ? "border-accent scale-110"
+                        : "border-white/30 group-hover:border-white/60"
+                    }`}
+                    style={{ backgroundColor: c.colorCode }}
+                  />
+                  <span
+                    className={`text-[10px] leading-tight max-w-[72px] text-center transition-colors ${
+                      c.color === selectedColor ? "text-foreground" : "text-muted"
+                    }`}
+                  >
+                    {c.color}
+                  </span>
+                </button>
               ))}
             </div>
           </div>
