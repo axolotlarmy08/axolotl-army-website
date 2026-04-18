@@ -2,16 +2,20 @@
  * Printful Mockup Generator orchestration.
  *
  * Printful only stores ONE on-garment preview per sync_product — whichever
- * side the user designed. To get BOTH front and back mockups, we have to
- * ask Printful's /mockup-generator/create-task endpoint to render them
- * explicitly, poll the task to completion, and cache the URLs.
+ * side the user designed. To get BOTH front and back mockups, we ask
+ * Printful's /mockup-generator/create-task endpoint to render them
+ * explicitly, poll the task to completion, and cache the URLs in Neon.
  *
- * Tasks take ~10-30 seconds. Rate limit: 10 tasks/minute/token. So we
- * generate lazily (on first product-page view per color), cache in memory
- * for 24h, and serialize requests to avoid tripping the limit.
+ * - Tasks take ~10-30 seconds.
+ * - Rate limit: 10 tasks/minute per token.
+ * - Neon persistence is shared across Vercel serverless instances so we
+ *   never regenerate a mockup we've already made.
+ * - Colors are generated in parallel (bounded to 5 concurrent) so wall
+ *   time stays within Vercel's 60s function ceiling.
  */
 
 import { getStoreProductDetail, type SyncVariant } from "@/lib/printful";
+import { getMockupsFromDb, saveMockupsToDb } from "@/lib/db";
 
 const PRINTFUL_API = "https://api.printful.com";
 
@@ -40,19 +44,19 @@ async function pf<T>(path: string, init?: RequestInit): Promise<T> {
 /* ─── Types ─── */
 
 export interface PlacementMockup {
-  placement: string; // "front" | "back" | "label_inside" | "left" | "right"
+  placement: string;
   url: string;
 }
 
 export interface ProductMockups {
   syncProductId: number;
-  /** Keyed by color name, e.g. { "Black": [{ placement: "front", url }, { placement: "back", url }] }. */
   byColor: Record<string, PlacementMockup[]>;
+  /** True if at least one color didn't get a full set of mockups this run. */
+  partial: boolean;
   generatedAt: number;
-  partial: boolean; // true if we hit rate limit or task timeout mid-generation
 }
 
-/* ─── Printfile dimensions cache ─── */
+/* ─── Printfile dimensions cache (per catalog product) ─── */
 
 interface Printfile {
   printfile_id: number;
@@ -90,57 +94,64 @@ interface TaskResponse {
 async function createTask(
   catalogProductId: number,
   variantId: number,
-  files: Array<{ placement: string; image_url: string; printfileWidth: number; printfileHeight: number }>
+  files: Array<{
+    placement: string;
+    image_url: string;
+    printfileWidth: number;
+    printfileHeight: number;
+  }>
 ): Promise<string> {
-  const res = await pf<TaskResponse>(`/mockup-generator/create-task/${catalogProductId}`, {
-    method: "POST",
-    body: JSON.stringify({
-      variant_ids: [variantId],
-      format: "jpg",
-      files: files.map((f) => ({
-        placement: f.placement,
-        image_url: f.image_url,
-        position: {
-          area_width: f.printfileWidth,
-          area_height: f.printfileHeight,
-          width: f.printfileWidth,
-          height: f.printfileHeight,
-          top: 0,
-          left: 0,
-        },
-      })),
-    }),
-  });
+  const res = await pf<TaskResponse>(
+    `/mockup-generator/create-task/${catalogProductId}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        variant_ids: [variantId],
+        format: "jpg",
+        files: files.map((f) => ({
+          placement: f.placement,
+          image_url: f.image_url,
+          position: {
+            area_width: f.printfileWidth,
+            area_height: f.printfileHeight,
+            width: f.printfileWidth,
+            height: f.printfileHeight,
+            top: 0,
+            left: 0,
+          },
+        })),
+      }),
+    }
+  );
   return res.result.task_key;
 }
 
 async function pollTask(
   taskKey: string,
-  maxAttempts = 20,
-  intervalMs = 3000
+  maxAttempts = 18,
+  intervalMs = 2500
 ): Promise<TaskResponse["result"]> {
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise((r) => setTimeout(r, intervalMs));
     const res = await pf<TaskResponse>(
       `/mockup-generator/task?task_key=${encodeURIComponent(taskKey)}`
     );
-    if (res.result.status === "completed" || res.result.status === "failed" || res.result.status === "error") {
+    if (
+      res.result.status === "completed" ||
+      res.result.status === "failed" ||
+      res.result.status === "error"
+    ) {
       return res.result;
     }
   }
-  // Timed out — return pending so caller can bail gracefully.
   return { task_key: taskKey, status: "pending" };
 }
 
-/* ─── Orchestration ─── */
+/* ─── Per-color generation ─── */
 
-const productCache = new Map<number, ProductMockups>();
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-
-/** Serialize generation across the whole process to respect 10 tasks/min. */
-let generationChain: Promise<unknown> = Promise.resolve();
-
-function pickFirstVariantPerColor(variants: SyncVariant[]): Map<string, SyncVariant> {
+function pickFirstVariantPerColor(
+  variants: SyncVariant[]
+): Map<string, SyncVariant> {
   const m = new Map<string, SyncVariant>();
   for (const v of variants) {
     const key = v.color || "default";
@@ -154,10 +165,13 @@ async function generateForColor(
   variant: SyncVariant,
   printfileDims: { width: number; height: number }
 ): Promise<PlacementMockup[]> {
-  const files: Array<{ placement: string; image_url: string; printfileWidth: number; printfileHeight: number }> = [];
+  const files: Array<{
+    placement: string;
+    image_url: string;
+    printfileWidth: number;
+    printfileHeight: number;
+  }> = [];
 
-  // Printful uses type names like "default" / "front_large" for front, "back" for back,
-  // and "preview" for the pre-generated single mockup (which we ignore here).
   const front = variant.files?.find(
     (f) => f.type === "front_large" || f.type === "default"
   );
@@ -190,80 +204,141 @@ async function generateForColor(
     const taskKey = await createTask(catalogProductId, variant.variant_id, files);
     const result = await pollTask(taskKey);
     if (result.status !== "completed" || !result.mockups) return [];
-    return result.mockups.map((m) => ({ placement: m.placement, url: m.mockup_url }));
+    return result.mockups.map((m) => ({
+      placement: m.placement,
+      url: m.mockup_url,
+    }));
   } catch (err) {
-    console.error(`Mockup task failed for variant ${variant.variant_id}:`, err);
+    console.error(
+      `Mockup task failed for variant ${variant.variant_id} (${variant.color}):`,
+      err
+    );
     return [];
   }
+}
+
+/* ─── In-flight dedup + top-level orchestration ─── */
+
+const inflight = new Map<number, Promise<ProductMockups>>();
+
+/**
+ * Bounded-concurrency helper — runs `items` through `fn` with at most
+ * `limit` in flight, accumulating results in order.
+ */
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const i = next++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+async function fillMissingAndCache(
+  syncProductId: number
+): Promise<ProductMockups> {
+  const detail = await getStoreProductDetail(syncProductId);
+  const variants = (detail.sync_variants || []).filter((v) => !v.is_ignored);
+  const catalogProductId = variants[0]?.product?.product_id;
+
+  // Start with whatever is already in the DB.
+  const cached = await getMockupsFromDb(syncProductId);
+  const byColor: Record<string, PlacementMockup[]> = {};
+  for (const row of cached) {
+    if (!byColor[row.color]) byColor[row.color] = [];
+    byColor[row.color].push({ placement: row.placement, url: row.url });
+  }
+
+  if (!catalogProductId || variants.length === 0) {
+    return { syncProductId, byColor, partial: false, generatedAt: Date.now() };
+  }
+
+  // Figure out which colors still need generation (0 or 1 placement cached
+  // but the product actually has both a front design file and a back design file).
+  const perColor = pickFirstVariantPerColor(variants);
+  const toGenerate: Array<{ color: string; variant: SyncVariant }> = [];
+  for (const [color, variant] of perColor) {
+    const expected = new Set<string>();
+    if (
+      variant.files?.some((f) => f.type === "front_large" || f.type === "default")
+    )
+      expected.add("front");
+    if (variant.files?.some((f) => f.type === "back")) expected.add("back");
+
+    const have = new Set((byColor[color] || []).map((m) => m.placement));
+    const missing = [...expected].filter((p) => !have.has(p));
+    if (missing.length > 0) toGenerate.push({ color, variant });
+  }
+
+  if (toGenerate.length === 0) {
+    return { syncProductId, byColor, partial: false, generatedAt: Date.now() };
+  }
+
+  const printfiles = await getPrintfiles(catalogProductId);
+  const mainPrintfile = printfiles.sort(
+    (a, b) => b.width * b.height - a.width * a.height
+  )[0];
+  if (!mainPrintfile) {
+    return { syncProductId, byColor, partial: true, generatedAt: Date.now() };
+  }
+
+  // Parallelize with a soft limit to respect Printful's 10/min rate.
+  const CONCURRENCY = 3;
+  const results = await mapWithConcurrency(
+    toGenerate,
+    CONCURRENCY,
+    async ({ color, variant }) => ({
+      color,
+      mockups: await generateForColor(catalogProductId, variant, {
+        width: mainPrintfile.width,
+        height: mainPrintfile.height,
+      }),
+    })
+  );
+
+  let partial = false;
+  const rowsToSave: Array<{ color: string; placement: string; url: string }> = [];
+  for (const { color, mockups } of results) {
+    if (mockups.length === 0) {
+      partial = true;
+      continue;
+    }
+    byColor[color] = mockups;
+    for (const m of mockups) {
+      rowsToSave.push({ color, placement: m.placement, url: m.url });
+    }
+  }
+
+  if (rowsToSave.length > 0) {
+    try {
+      await saveMockupsToDb(syncProductId, rowsToSave);
+    } catch (err) {
+      console.error("Failed to persist mockups:", err);
+    }
+  }
+
+  return { syncProductId, byColor, partial, generatedAt: Date.now() };
 }
 
 export async function getMockupsForProduct(
   syncProductId: number
 ): Promise<ProductMockups> {
-  const cached = productCache.get(syncProductId);
-  if (cached && Date.now() - cached.generatedAt < CACHE_TTL_MS) {
-    return cached;
-  }
+  // Dedup concurrent requests for the same product.
+  const pending = inflight.get(syncProductId);
+  if (pending) return pending;
 
-  // Fetch sync product detail to learn catalog id + per-color variants + designs
-  const detail = await getStoreProductDetail(syncProductId);
-  const variants = (detail.sync_variants || []).filter((v) => !v.is_ignored);
-  if (variants.length === 0) {
-    const empty: ProductMockups = {
-      syncProductId,
-      byColor: {},
-      generatedAt: Date.now(),
-      partial: false,
-    };
-    productCache.set(syncProductId, empty);
-    return empty;
-  }
-
-  const catalogProductId = variants[0].product?.product_id;
-  if (!catalogProductId) {
-    throw new Error(`Sync product ${syncProductId} has no catalog product_id`);
-  }
-
-  // Pick first printfile — for apparel there's typically one main print area dimension.
-  const printfiles = await getPrintfiles(catalogProductId);
-  const mainPrintfile = printfiles.sort((a, b) => b.width * b.height - a.width * a.height)[0];
-  if (!mainPrintfile) {
-    throw new Error(`No printfiles for catalog product ${catalogProductId}`);
-  }
-
-  const perColor = pickFirstVariantPerColor(variants);
-  const byColor: Record<string, PlacementMockup[]> = {};
-  let partial = false;
-
-  // Serialize generation to respect rate limits. Each color is one task.
-  for (const [color, variant] of perColor) {
-    const prev = generationChain;
-    generationChain = prev.then(() =>
-      generateForColor(catalogProductId, variant, {
-        width: mainPrintfile.width,
-        height: mainPrintfile.height,
-      }).then((mockups) => {
-        byColor[color] = mockups;
-        if (mockups.length === 0) partial = true;
-      })
-    );
-  }
-  await generationChain;
-
-  const result: ProductMockups = {
-    syncProductId,
-    byColor,
-    generatedAt: Date.now(),
-    partial,
-  };
-  productCache.set(syncProductId, result);
-  return result;
-}
-
-/** Check cache only; returns null if not generated yet. */
-export function getCachedMockups(syncProductId: number): ProductMockups | null {
-  const cached = productCache.get(syncProductId);
-  if (!cached) return null;
-  if (Date.now() - cached.generatedAt >= CACHE_TTL_MS) return null;
-  return cached;
+  const promise = fillMissingAndCache(syncProductId).finally(() => {
+    inflight.delete(syncProductId);
+  });
+  inflight.set(syncProductId, promise);
+  return promise;
 }
