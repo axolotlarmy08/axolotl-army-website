@@ -119,6 +119,13 @@ export interface StoreProductSummary {
   is_ignored: boolean;
 }
 
+export interface SyncVariantFile {
+  /** "default" (the design), "preview" (the design-on-garment mockup), "back", etc. */
+  type: string;
+  url?: string;
+  preview_url?: string;
+}
+
 export interface SyncVariant {
   id: number; // sync_variant_id
   external_id: string;
@@ -135,9 +142,11 @@ export interface SyncVariant {
   product: {
     variant_id: number;
     product_id: number;
-    image: string;
+    image: string; // blank garment — not the design
     name: string;
   };
+  /** Array of uploaded design/mockup files. `type: "preview"` is the design-on-garment. */
+  files?: SyncVariantFile[];
   is_ignored: boolean;
 }
 

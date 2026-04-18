@@ -82,12 +82,22 @@ export async function GET() {
             continue;
           }
 
+          // Prefer the design-on-garment preview URL (from files[] type=preview).
+          // Falls back to the product image (blank garment) if no preview found,
+          // then to the store product's thumbnail (which is usually a preview too).
+          const previewFile = v.files?.find((f) => f.type === "preview");
+          const variantImage =
+            previewFile?.preview_url ||
+            previewFile?.url ||
+            v.product?.image ||
+            summary.thumbnail_url;
+
           const key = v.color || "default";
           if (!colorGroups[key]) {
             colorGroups[key] = {
               color: v.color || "Default",
               colorCode: "#000",
-              image: v.product?.image || summary.thumbnail_url,
+              image: variantImage,
               sizes: [],
             };
           }
@@ -109,11 +119,11 @@ export async function GET() {
           ...colors.flatMap((c) => c.sizes.map((s) => s.retailPrice))
         );
 
-        // The store product's thumbnail_url is often the blank garment. Prefer
-        // the first variant's mockup (which has the design applied) so the
-        // grid shows the finished product, not a blank shirt/long-sleeve/etc.
+        // For the grid card, prefer the Printful sync product thumbnail_url
+        // (which IS the design-on-garment preview), falling back to the first
+        // variant's computed image if somehow missing.
         const thumbnail =
-          colors[0]?.image || summary.thumbnail_url;
+          summary.thumbnail_url || colors[0]?.image || "";
 
         return {
           syncProductId: summary.id,

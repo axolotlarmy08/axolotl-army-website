@@ -26,8 +26,8 @@ export default function Merch() {
                 Rep the Army
               </h2>
               <p className="text-muted text-lg leading-relaxed max-w-[50ch]">
-                Official Axolotl Army gear. Tees, hoodies, and caps featuring the
-                crew. Free shipping worldwide.
+                Official Axolotl Army gear, printed on demand and shipped
+                worldwide. Free shipping on every order.
               </p>
             </div>
           </div>
