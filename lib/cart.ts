@@ -4,15 +4,22 @@
  */
 
 export interface CartItem {
-  id: string; // unique key: `${characterName}-${productType}-${variantId}`
+  id: string; // unique key: `${syncVariantId}`
   characterName: string;
   characterImage: string;
   productType: string;
   productLabel: string;
+  /**
+   * Printful sync_variant_id — required. Designs are already attached to
+   * the sync variant in Printful, so the order payload just references
+   * this id (no file URL needed).
+   */
+  syncVariantId: number;
+  /** Printful catalog variant id — kept for margin lookups and debugging. */
   variantId: number;
   size: string;
   color: string;
-  price: number; // in dollars
+  price: number; // in dollars (retail, shipping-inclusive)
   quantity: number;
   mockupUrl?: string;
 }

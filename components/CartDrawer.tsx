@@ -145,7 +145,7 @@ export default function CartDrawer() {
               </span>
             </div>
             <p className="text-xs text-muted/50">
-              $5 flat rate shipping. Free over $150.
+              Free shipping worldwide.
             </p>
             <a
               href="/checkout"

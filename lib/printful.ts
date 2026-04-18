@@ -96,13 +96,54 @@ export interface OrderRecipient {
 }
 
 export interface OrderItem {
+  /** Preferred: synced store variant (design already attached in Printful). */
   sync_variant_id?: number;
-  variant_id: number;
+  /** Fallback: raw catalog variant + design file URL. */
+  variant_id?: number;
   quantity: number;
-  files: Array<{
+  files?: Array<{
     type: string;
     url: string;
   }>;
+}
+
+/* ─── Store Product types (v1 /store/products) ─── */
+
+export interface StoreProductSummary {
+  id: number;
+  external_id: string;
+  name: string;
+  variants: number;
+  synced: number;
+  thumbnail_url: string;
+  is_ignored: boolean;
+}
+
+export interface SyncVariant {
+  id: number; // sync_variant_id
+  external_id: string;
+  sync_product_id: number;
+  name: string;
+  synced: boolean;
+  variant_id: number; // catalog variant id
+  retail_price: string; // "25.00" — user-set price in Printful dashboard
+  currency: string;
+  sku: string;
+  size: string;
+  color: string;
+  availability_status: string;
+  product: {
+    variant_id: number;
+    product_id: number;
+    image: string;
+    name: string;
+  };
+  is_ignored: boolean;
+}
+
+export interface StoreProductDetail {
+  sync_product: StoreProductSummary;
+  sync_variants: SyncVariant[];
 }
 
 /* ─── Catalog ─── */
@@ -134,9 +175,29 @@ export async function getCatalogVariants(
 
 /* ─── Store Products (synced products with your designs) ─── */
 
-export async function getStoreProducts() {
-  const res = await apiFetch<{ data: unknown[] }>("/store/products");
-  return res.data;
+/**
+ * List all synced store products. Uses v1 API — v2 /sync/products shape
+ * is still in flux and doesn't return retail_price reliably.
+ */
+export async function listStoreProducts(): Promise<StoreProductSummary[]> {
+  const res = await apiFetch<{ result: StoreProductSummary[] }>(
+    "/store/products",
+    {},
+    true
+  );
+  return res.result || [];
+}
+
+/** Full detail for a single store product, including sync_variants[]. */
+export async function getStoreProductDetail(
+  syncProductId: number
+): Promise<StoreProductDetail> {
+  const res = await apiFetch<{ result: StoreProductDetail }>(
+    `/store/products/${syncProductId}`,
+    {},
+    true
+  );
+  return res.result;
 }
 
 /* ─── Mockup Generation (v1 API — v2 mockup endpoint requires store products) ─── */
@@ -248,34 +309,27 @@ export async function getShippingRates(
 }
 
 /* ─── Our product configuration ─── */
-
+/**
+ * Catalog-id reference for the product types we actually sell.
+ * Prices are no longer stored here — `retail_price` comes from each
+ * synced store product in Printful and is the source of truth.
+ *
+ * Shipping is baked into the Printful retail_price. The website charges
+ * no separate shipping line (free shipping worldwide).
+ */
 export const PRODUCT_CONFIG = {
   tee: {
     printfulId: 71,
     name: "Bella+Canvas 3001",
-    basePrice: 39, // $34 + $5 baked-in shipping
   },
   hoodie: {
     printfulId: 146,
     name: "Gildan 18500",
-    basePrice: 73, // $68 + $5 baked-in shipping
   },
   cap: {
     printfulId: 206,
     name: "Yupoong 6245CM",
-    basePrice: 33, // $28 + $5 baked-in shipping
   },
-  sticker: {
-    printfulId: 358,
-    name: "Kiss-Cut Stickers",
-    basePrice: 17, // $12 + $5 baked-in shipping
-  },
-} as const;
-
-/* ─── Shipping config ─── */
-export const SHIPPING_CONFIG = {
-  flatRate: 5.00,
-  freeThreshold: 150.00,
 } as const;
 
 export type ProductType = keyof typeof PRODUCT_CONFIG;

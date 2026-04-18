@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ArrowLeft, ShieldCheck, Truck, SpinnerGap, Package } from "@phosphor-icons/react";
+import { ArrowLeft, ShieldCheck, Truck, Package } from "@phosphor-icons/react";
 import { useCart } from "@/components/CartProvider";
 import { countries, getRegions } from "@/lib/regions";
 import { calculateTax } from "@/lib/tax";
-import { SHIPPING_CONFIG } from "@/lib/printful";
 
 type Step = "cart" | "shipping" | "review" | "complete";
 
@@ -26,17 +25,14 @@ export default function CheckoutPage() {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Shipping calculation
-  const isFreeShipping = total >= SHIPPING_CONFIG.freeThreshold;
-  const shippingCost = isFreeShipping ? 0 : SHIPPING_CONFIG.flatRate;
-  const amountToFreeShipping = SHIPPING_CONFIG.freeThreshold - total;
-
+  // Free shipping worldwide — shipping cost is baked into every product's
+  // retail price in Printful, so the checkout line is always $0.
   // Tax calculation (only available after shipping step when we know location)
   const tax = step === "review" || step === "complete"
     ? calculateTax(total, shipping.country_code, shipping.state_code)
     : null;
 
-  const grandTotal = total + shippingCost + (tax?.amount || 0);
+  const grandTotal = total + (tax?.amount || 0);
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,11 +47,8 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: cart.items.map((item) => ({
-            variantId: item.variantId,
+            syncVariantId: item.syncVariantId,
             quantity: item.quantity,
-            price: item.price,
-            designUrl: "",
-            productLabel: item.productLabel,
           })),
           shipping: {
             name: shipping.name,
@@ -160,41 +153,18 @@ export default function CheckoutPage() {
               ))}
             </div>
 
-            {/* Shipping info banner */}
+            {/* Free shipping banner */}
             <div className="p-4 rounded-2xl bg-accent/5 border border-accent/20 mb-6">
               <div className="flex items-center gap-3">
                 <Truck size={20} className="text-accent flex-shrink-0" />
-                <div>
-                  {isFreeShipping ? (
-                    <p className="text-sm text-accent font-medium">You qualify for free shipping!</p>
-                  ) : (
-                    <>
-                      <p className="text-sm text-foreground">
-                        Flat rate shipping: <strong>${SHIPPING_CONFIG.flatRate.toFixed(2)}</strong>
-                      </p>
-                      <p className="text-xs text-muted">
-                        Spend ${amountToFreeShipping.toFixed(2)} more for free shipping (orders over ${SHIPPING_CONFIG.freeThreshold})
-                      </p>
-                    </>
-                  )}
-                </div>
+                <p className="text-sm text-accent font-medium">Free shipping worldwide.</p>
               </div>
             </div>
 
             {/* Subtotal */}
-            <div className="flex items-center justify-between p-4 rounded-2xl bg-surface border border-border/20 mb-2">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-surface border border-border/20 mb-6">
               <span className="text-foreground font-medium">Subtotal</span>
               <span className="text-xl font-bold text-foreground">${total.toFixed(2)}</span>
-            </div>
-            <div className="flex items-center justify-between px-4 py-2 mb-6">
-              <span className="text-sm text-muted">Shipping</span>
-              <span className="text-sm text-foreground">
-                {isFreeShipping ? (
-                  <span className="text-accent font-medium">FREE</span>
-                ) : (
-                  `$${SHIPPING_CONFIG.flatRate.toFixed(2)}`
-                )}
-              </span>
             </div>
 
             <button onClick={() => setStep("shipping")} className="w-full bg-accent text-background font-medium py-3.5 rounded-full text-base hover:bg-accent-dim transition-colors active:scale-[0.98]">
@@ -341,14 +311,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted">Shipping</span>
-                {isFreeShipping ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted line-through">${SHIPPING_CONFIG.flatRate.toFixed(2)}</span>
-                    <span className="text-sm text-accent font-medium">FREE</span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-foreground">${shippingCost.toFixed(2)}</span>
-                )}
+                <span className="text-sm text-accent font-medium">FREE</span>
               </div>
               {tax && tax.amount > 0 && (
                 <div className="flex justify-between">
