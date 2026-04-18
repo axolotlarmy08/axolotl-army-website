@@ -25,6 +25,10 @@ export default function ProductDetail({ syncProductId }: Props) {
   const [selectedSyncVariantId, setSelectedSyncVariantId] = useState<
     number | null
   >(null);
+  // Track the selected SIZE NAME separately from syncVariantId — the latter is
+  // color-specific (Black / M has a different sync variant id than Red / M),
+  // so we need the size name to persist the user's choice across color swaps.
+  const [selectedSizeName, setSelectedSizeName] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [view, setView] = useState<"front" | "back">("front");
@@ -77,10 +81,26 @@ export default function ProductDetail({ syncProductId }: Props) {
     return product.colors.find((c) => c.color === selectedColor) ?? null;
   }, [product, selectedColor]);
 
-  // Reset size selection whenever color changes; also reset to front view.
+  // When color changes, keep the user's previously-selected size if the new
+  // color offers it; otherwise fall back to the first available size. Also
+  // snap the view back to front.
   useEffect(() => {
-    setSelectedSyncVariantId(currentColor?.sizes[0]?.syncVariantId ?? null);
+    if (!currentColor) return;
+    const sizes = currentColor.sizes;
+    const matched = selectedSizeName
+      ? sizes.find((s) => s.size === selectedSizeName)
+      : undefined;
+    const target = matched ?? sizes[0];
+    if (target) {
+      setSelectedSyncVariantId(target.syncVariantId);
+      // Record the size name on first mount so subsequent color swaps have
+      // something to match against.
+      if (!selectedSizeName) setSelectedSizeName(target.size);
+    } else {
+      setSelectedSyncVariantId(null);
+    }
     setView("front");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentColor]);
 
   // Pull generated mockups for the current color, if any.
@@ -315,7 +335,10 @@ export default function ProductDetail({ syncProductId }: Props) {
               {currentColor.sizes.map((s) => (
                 <button
                   key={s.syncVariantId}
-                  onClick={() => setSelectedSyncVariantId(s.syncVariantId)}
+                  onClick={() => {
+                    setSelectedSyncVariantId(s.syncVariantId);
+                    setSelectedSizeName(s.size);
+                  }}
                   className={`px-4 py-2 rounded-xl text-sm font-medium border transition-all ${
                     s.syncVariantId === selectedSyncVariantId
                       ? "border-accent text-foreground bg-accent/10"
