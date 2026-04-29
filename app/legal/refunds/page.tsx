@@ -61,8 +61,9 @@ export default function RefundsPage() {
         </li>
         <li>One-off credit top-ups used for AI generation jobs.</li>
         <li>
-          The 7-day money-back guarantee on first-month subscriptions and the
-          30-day money-back guarantee on annual signups.
+          When subscription fees are and are not refundable (we do not offer a
+          general money-back guarantee — section 3 explains the narrow
+          situations in which we will refund anyway).
         </li>
         <li>
           Failed-payment handling, account locking, and chargeback procedures.
@@ -123,90 +124,139 @@ export default function RefundsPage() {
         accordance with our Privacy Policy and cannot be recovered.
       </p>
 
-      <h2>3. 7-day money-back guarantee</h2>
+      <h2>3. Subscriptions are non-refundable</h2>
 
-      <h3>3.1 What is covered</h3>
+      <h3>3.1 No general money-back guarantee</h3>
       <p>
-        We offer a <strong>7-day money-back guarantee</strong> on the first
-        paid month of a Starter, Pro, or Premium subscription. If you decide
-        the Portal is not for you within 7 days of your first paid charge, we
-        will refund the full amount of that charge.
+        Subscription fees are <strong>non-refundable</strong>. We do not
+        offer a 7-day, 14-day, or 30-day money-back guarantee on any
+        monthly or annual subscription tier (Starter, Pro, Premium, or
+        Enterprise). If you decide the Service is not for you, you can
+        cancel at any time per section 2 above; you will not be billed for
+        any period after cancellation, and your existing access continues
+        through the end of the period you have already paid for.
+      </p>
+      <p>
+        We take this position deliberately. Subscription fees fund
+        ongoing access to AI generation capacity that is reserved for you
+        regardless of whether you use it. Pre-loaded credits and add-on
+        capacity also incur real upstream costs from our model providers
+        the moment you activate them. A blanket money-back guarantee on a
+        usage-based AI product creates a meaningful incentive to consume
+        the included credits and then claim a refund — which is unfair to
+        customers paying their fair share and to us. If you want to try
+        the Portal before subscribing, contact{" "}
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> to ask
+        about current trial offers.
       </p>
 
-      <h3>3.2 What is not covered</h3>
+      <h3>3.2 When we will issue a refund anyway</h3>
       <p>
-        The 7-day money-back guarantee does <strong>not</strong> apply to:
+        We will refund a subscription charge in the following narrow
+        circumstances:
       </p>
       <ul>
         <li>
-          Annual plans purchased at a discount (covered by section 4 instead).
+          <strong>Billing error.</strong> You were charged the wrong
+          amount, charged twice, or charged after a confirmed cancellation.
+          Email <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a> with
+          the affected charge details and we will reverse the error.
         </li>
         <li>
-          Enterprise contracts (those are governed by the order form and
-          master services agreement signed at the time of purchase).
+          <strong>Service-side failure to deliver.</strong> The Service
+          was materially unavailable or substantially broken for the
+          period covered by the charge, and the failure was attributable
+          to us (not to a third-party API provider, your network, or
+          incorrect use). We will refund the affected period, prorated.
+          Where an SLA applies, the SLA service-credit calculation in
+          section 8 governs and is the exclusive remedy for downtime.
         </li>
-        <li>The Lead Finder Add-on.</li>
-        <li>The Editor Add-on.</li>
-        <li>One-off credit top-ups (see section 5).</li>
         <li>
-          Renewals — the guarantee is intentionally limited to the first paid
-          month so customers cannot &ldquo;reset&rdquo; the window by
-          re-subscribing.
+          <strong>Statutory consumer-protection rights</strong> in your
+          jurisdiction (see section 9). Those rights are not waived by
+          this policy and override anything inconsistent in this section.
+        </li>
+        <li>
+          <strong>Goodwill, at our sole discretion.</strong> In rare
+          cases — for example, a documented support ticket showing you
+          were unable to use the Service for reasons we agreed to fix and
+          did not fix — we may issue a one-off goodwill refund. Goodwill
+          refunds are not a precedent and are not available on demand.
         </li>
       </ul>
 
-      <h3>3.3 How to request a refund under the 7-day guarantee</h3>
+      <h3>3.3 What is excluded even from the discretionary refunds above</h3>
+      <ul>
+        <li>
+          <strong>Subscription periods during which credits were
+          consumed.</strong> If any AI generation, outreach send, or
+          publish action ran on the account during the period, that
+          period is treated as delivered. We may refund a prorated
+          portion of an unused future period rather than the entire
+          charge.
+        </li>
+        <li>
+          <strong>Renewals after cancellation reminders.</strong> Annual
+          plans send a 30-day renewal reminder; monthly plans show
+          renewal dates in <a href={`${PORTAL_DOMAIN}/portal/plan`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/plan</a>.
+          Forgetting to cancel is not by itself a basis for a refund.
+        </li>
+        <li>
+          <strong>Repeat or serial signups.</strong> Refund eligibility is
+          tracked per individual, payment method, and account family. We
+          may decline refunds where it appears the same person has
+          repeatedly signed up to consume credits and request a refund.
+        </li>
+      </ul>
+
+      <h3>3.4 How to request a refund</h3>
       <ol>
         <li>
-          Email <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a> within 7
-          days of your first paid charge from the email address on the
-          account.
+          Email <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a> from
+          the address on the account.
         </li>
         <li>
-          Include your account email, the approximate date of the charge, and
-          the last 4 digits of the card used (so we can match the Stripe
-          charge).
+          Tell us which charge you are asking about (date and approximate
+          amount), why you are requesting the refund (which of the
+          categories in section 3.2 applies), and any supporting context
+          (support ticket numbers, screenshots, etc.).
         </li>
         <li>
-          We confirm receipt within one business day and issue the refund via
-          Stripe within <strong>5&ndash;10 business days</strong>. Time to
-          appear on your statement depends on your card issuer.
+          We confirm receipt within one business day. If the request is
+          eligible, we issue the refund via Stripe within{" "}
+          <strong>5&ndash;10 business days</strong>. Time to appear on
+          your statement depends on your card issuer. If we decline, we
+          will explain why.
         </li>
       </ol>
-      <p>
-        Refunds under the 7-day guarantee terminate the subscription
-        immediately; access ends on the day the refund is issued.
-      </p>
 
       <h2>4. Annual plans</h2>
 
-      <h3>4.1 30-day money-back guarantee on first signup</h3>
+      <h3>4.1 Non-refundable</h3>
       <p>
-        Annual subscriptions are paid upfront for 12 months. The first time
-        you purchase an annual plan you get a <strong>30-day</strong>{" "}
-        money-back guarantee — full refund, account closed, no questions
-        beyond the matching steps in section 3.3.
+        Annual subscriptions are paid upfront for 12 months and are{" "}
+        <strong>non-refundable</strong> in the same way as monthly
+        subscriptions (see section 3.1). Discounts on annual plans
+        reflect that you are committing to the full 12-month period.
+      </p>
+      <p>
+        The discretionary refund categories in section 3.2 apply to
+        annual plans too. The most common path to a refund on an annual
+        plan is a material breach of our <a href="/legal/sla">SLA</a> —
+        for example, extended downtime — in which case service credits
+        (and, where the SLA so provides, prorated cash refunds) are the
+        exclusive remedy.
       </p>
 
-      <h3>4.2 After 30 days</h3>
+      <h3>4.2 Auto-renewal</h3>
       <p>
-        After the initial 30-day window, annual plans are non-refundable
-        except where we materially breach this policy or our SLA. The most
-        common example of a material breach is{" "}
-        <strong>extended downtime</strong> — see our{" "}
-        <a href="/legal/sla">SLA</a> for the exact thresholds and the
-        service-credit calculation. Service credits are the exclusive remedy
-        for downtime under the SLA; pro-rata cash refunds are available only
-        when the SLA itself or applicable law mandates them.
-      </p>
-
-      <h3>4.3 Auto-renewal</h3>
-      <p>
-        Annual plans <strong>auto-renew</strong> for another 12 months at the
-        then-current rate unless cancelled at least <strong>7 days</strong>{" "}
-        before the renewal date. We send a reminder email 30 days before
-        renewal. To cancel an annual plan ahead of renewal, follow the steps
-        in section 2.1.
+        Annual plans <strong>auto-renew</strong> for another 12 months at
+        the then-current rate unless cancelled at least{" "}
+        <strong>7 days</strong> before the renewal date. We send a
+        reminder email 30 days before renewal and again 7 days before. To
+        cancel an annual plan ahead of renewal, follow the steps in
+        section 2.1. A renewal that goes through because the customer
+        forgot to cancel is not by itself a basis for a refund.
       </p>
 
       <h2>5. Credit top-ups</h2>
@@ -229,19 +279,34 @@ export default function RefundsPage() {
 
       <h3>5.3 Refund eligibility for top-ups</h3>
       <p>
-        We will refund a credit top-up at our discretion if:
+        Once you click <em>Buy</em> on a credit top-up the order is
+        considered final. We will refund a credit top-up only in these
+        narrow circumstances:
       </p>
       <ul>
         <li>
-          You request the refund within 7 days of purchase{" "}
-          <strong>and</strong> none of the credits have been consumed; or
+          <strong>Zero credits consumed within 24 hours of purchase.</strong>
+          {" "}If you contact us at{" "}
+          <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a> within 24
+          hours and our records confirm the credits are entirely
+          unconsumed, we will reverse the charge and remove the unused
+          credit balance from your account.
         </li>
         <li>
-          The credits could not be consumed because of a Service-side fault
-          attributable to us (not a third-party API provider outage covered
-          by the SLA).
+          <strong>Service-side fault attributable to us.</strong> The
+          credits could not be consumed because of a fault on our side
+          (not a third-party API provider outage, which is covered by
+          the SLA service-credit mechanism instead).
+        </li>
+        <li>
+          <strong>Statutory rights</strong> under your local consumer-protection law (see section 9).
         </li>
       </ul>
+      <p>
+        Outside these categories, credit top-ups are non-refundable —
+        whether or not you have used them yet — because the upstream API
+        capacity is reserved for you the moment the top-up clears.
+      </p>
 
       <h3>5.4 Bulk top-ups (Enterprise)</h3>
       <p>
@@ -319,29 +384,35 @@ export default function RefundsPage() {
 
       <h2>7. Chargebacks</h2>
       <p>
-        Chargebacks are expensive for us and your card issuer alike, and our
-        money-back guarantees usually offer a faster, cleaner path to the
-        same outcome. If you believe a charge is wrong, please email{" "}
+        Chargebacks are expensive for us and your card issuer alike, and
+        the discretionary refund process in section 3.4 is faster and
+        cleaner than a chargeback for legitimate disputes. If you believe
+        a charge is wrong, please email{" "}
         <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>{" "}
         <strong>before</strong> initiating a chargeback. We aim to resolve
         billing disputes within 5 business days.
       </p>
       <ul>
         <li>
-          Initiating a chargeback while a refund-eligible window (section 3,
-          4, or 5) is still open results in immediate <strong>account
-          suspension</strong> until the dispute is resolved.
+          Initiating a chargeback before contacting us results in
+          immediate <strong>account suspension</strong> until the
+          dispute is resolved.
         </li>
         <li>
-          We will dispute chargebacks where we have evidence of legitimate
-          use (login records, generation history, publish events, IP
-          addresses).
+          We will dispute chargebacks where we have evidence of
+          legitimate use (login records, generation history, publish
+          events, outreach sends, IP addresses).
         </li>
         <li>
           A successful chargeback against an account that was using the
-          Service in good faith does not by itself end the contract — the
-          Stripe fees and the original charge become a debt that must be
-          settled before the account is reactivated.
+          Service in good faith does not by itself end the contract —
+          the Stripe chargeback fee and the original charge become a
+          debt that must be settled before the account is reactivated.
+        </li>
+        <li>
+          Repeated chargebacks across multiple accounts or payment
+          methods are treated as a violation of the Acceptable Use
+          Policy and may result in permanent denial of service.
         </li>
       </ul>
 
@@ -362,9 +433,10 @@ export default function RefundsPage() {
           <strong>Starter, Pro, and Premium:</strong> we operate the Service
           to the same engineering standards and target 99.9% uptime, but
           there is no formal uptime guarantee and no service credits on
-          these tiers. We do, however, honor the money-back guarantees in
-          sections 3 and 4 for any user who feels we did not deliver during
-          the relevant window.
+          these tiers. If you experience an unusable period attributable
+          to us, the discretionary refund path in section 3.2 applies —
+          contact <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a> with
+          the affected timeframe.
         </li>
       </ul>
 
@@ -377,23 +449,34 @@ export default function RefundsPage() {
       <h3>9.1 European Union and United Kingdom</h3>
       <p>
         Consumers (not businesses) resident in the EU or the UK have a{" "}
-        <strong>14-day right of withdrawal</strong> under the Consumer Rights
-        Directive (and equivalent UK legislation) for distance contracts.
-        Once you actively start using the Service after agreeing to immediate
-        performance, the right of withdrawal for digital content may be
-        limited under Article 16(m) of the Directive — but our 7-day
-        money-back guarantee in section 3 applies regardless of whether the
-        statutory right has lapsed, and it gives most users a faster route to
-        the same outcome.
+        <strong>14-day right of withdrawal</strong> under the Consumer
+        Rights Directive (and equivalent UK legislation) for distance
+        contracts. To exercise this right, email{" "}
+        <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a> within 14
+        days of subscribing.
+      </p>
+      <p>
+        Important: under Article 16(m) of the Directive, the right of
+        withdrawal for digital content is{" "}
+        <strong>extinguished once performance has begun</strong> — that
+        is, as soon as you sign a generation, send an outreach email,
+        publish a post, or otherwise consume any included credit or
+        feature. By signing up and confirming the consent prompt at
+        checkout, you agree to immediate performance and acknowledge
+        that you lose the right of withdrawal for any portion of the
+        Service you have already used. We will refund a prorated portion
+        of the period during which performance had not yet begun.
       </p>
 
       <h3>9.2 California</h3>
       <p>
         California buyers using the Service for personal, family, or
-        household purposes are entitled to a 30-day refund per California
-        Civil Code &sect; 1750 et seq. Email{" "}
+        household purposes have rights under California Civil Code
+        &sect; 1750 et seq. Email{" "}
         <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a> with proof of
-        purchase within 30 days to claim.
+        purchase to exercise those rights. As with section 9.1, refunds
+        do not extend to portions of the Service that have already been
+        delivered (credits consumed, sends made, content generated).
       </p>
 
       <h3>9.3 Other jurisdictions</h3>

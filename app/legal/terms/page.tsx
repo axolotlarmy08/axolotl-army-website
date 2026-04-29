@@ -138,7 +138,7 @@ export default function TermsPage() {
       <p>
         Subscriptions renew automatically at the then-current price for the
         same billing interval until you cancel. You may cancel anytime from{" "}
-        <Link href="/portal/plan">/portal/plan</Link>; cancellation takes
+        <a href={`${PORTAL_DOMAIN}/portal/plan`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/plan</a>; cancellation takes
         effect at the end of the current paid period.
       </p>
 
@@ -216,7 +216,7 @@ export default function TermsPage() {
       </ul>
       <p>
         You can resolve a failed payment at any time from the billing portal
-        in <Link href="/portal/plan">/portal/plan</Link>.
+        in <a href={`${PORTAL_DOMAIN}/portal/plan`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/plan</a>.
       </p>
 
       <h2>5. Free trial and freemium</h2>
@@ -226,32 +226,44 @@ export default function TermsPage() {
         subscription fee while a trial is active. At the end of a trial, your
         plan converts to the paid tier you selected at sign-up unless you
         cancel before the trial ends. You can cancel at any time from{" "}
-        <Link href="/portal/plan">/portal/plan</Link>.
+        <a href={`${PORTAL_DOMAIN}/portal/plan`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/plan</a>.
       </p>
 
       <h2>6. Cancellation and refunds</h2>
       <ul>
         <li>
           You may cancel your subscription at any time from{" "}
-          <Link href="/portal/plan">/portal/plan</Link>. Access continues
-          through the end of the period you have already paid for.
+          <a href={`${PORTAL_DOMAIN}/portal/plan`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/plan</a>. Access continues
+          through the end of the period you have already paid for, and we
+          will not bill you for any subsequent period.
         </li>
         <li>
-          We offer a 7-day money-back guarantee on the first paid month of
-          Starter and Pro tiers. To request a refund under this guarantee,
-          email{" "}
-          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> within seven
-          (7) days of your first paid charge.
+          <strong>Subscription fees are non-refundable.</strong> We do not
+          offer a 7-day, 14-day, or 30-day money-back guarantee on any
+          monthly or annual tier. Subscription fees fund AI generation
+          capacity that is reserved for you regardless of whether you use
+          it; a blanket money-back window on a usage-based AI product
+          creates an obvious abuse vector and is unfair to customers
+          paying their fair share.
         </li>
         <li>
-          Usage-based credit top-ups are not refundable once the credits have
-          been consumed.
+          We will issue a refund on a discretionary basis for billing
+          errors, service-side failures to deliver, or where required by
+          statutory consumer-protection law. Email{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> with the
+          affected charge details. The full criteria are in our{" "}
+          <Link href="/legal/refunds">Refund Policy</Link>.
         </li>
         <li>
-          Premium and Enterprise refunds, and any other case not covered above,
-          are governed by our full{" "}
-          <Link href="/legal/refunds">Refund Policy</Link>, which controls if
-          there is any conflict with this section.
+          Credit top-ups are non-refundable once consumed. Unconsumed
+          top-ups are refundable only within 24 hours of purchase, per
+          the Refund Policy.
+        </li>
+        <li>
+          The full{" "}
+          <Link href="/legal/refunds">Refund Policy</Link> governs any
+          case not covered above, and controls if there is any conflict
+          with this section.
         </li>
       </ul>
 
@@ -316,7 +328,7 @@ export default function TermsPage() {
         Terms and the third party&rsquo;s own terms and privacy policies. We
         are not responsible for the availability or behavior of third-party
         services. You can revoke access to any connected account at any time
-        from <Link href="/portal/settings">/portal/settings</Link> or directly
+        from <a href={`${PORTAL_DOMAIN}/portal/settings`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/settings</a> or directly
         with the third-party provider.
       </p>
 
@@ -420,7 +432,7 @@ export default function TermsPage() {
         <li>
           <strong>By you.</strong> You may terminate at any time by cancelling
           your subscription and deleting your account from{" "}
-          <Link href="/portal/settings">/portal/settings</Link>.
+          <a href={`${PORTAL_DOMAIN}/portal/settings`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/settings</a>.
         </li>
         <li>
           <strong>Effect of termination.</strong> After termination you have a

@@ -13,10 +13,13 @@ const PORTAL_LINK = "https://portal.axolotlarmy.net";
 // lib/legalContent.ts (or import from there).
 const footerLinks = {
   Platform: [
-    { label: "Features", href: "#features" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "Characters", href: "#characters" },
-    { label: "Merch", href: "#merch" },
+    // Absolute hash links so these work from /legal/* and /how-it-works.
+    // Without the leading "/", a relative #features would resolve against
+    // the current pathname and do nothing on a non-home page.
+    { label: "Features", href: "/#features" },
+    { label: "How It Works", href: "/how-it-works" },
+    { label: "Characters", href: "/#characters" },
+    { label: "Merch", href: "/#merch" },
   ],
   Portal: [
     { label: "Log In", href: `${PORTAL_LINK}/login` },
