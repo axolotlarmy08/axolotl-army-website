@@ -4,6 +4,7 @@ import "./globals.css";
 import CartProvider from "@/components/CartProvider";
 import CartDrawer from "@/components/CartDrawer";
 import ScrollToTop from "@/components/ScrollToTop";
+import CookieBanner from "@/components/CookieBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({
           <ScrollToTop />
           {children}
           <CartDrawer />
+          <CookieBanner />
         </CartProvider>
       </body>
     </html>

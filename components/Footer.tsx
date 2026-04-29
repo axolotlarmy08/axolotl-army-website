@@ -5,8 +5,12 @@ import {
   XLogo,
 } from "@phosphor-icons/react/dist/ssr";
 
-const PORTAL_LINK = "/portal-coming-soon";
+const PORTAL_LINK = "https://portal.axolotlarmy.net";
 
+// Phase 71d — full legal nav now lives at /legal/*. The marketing site
+// mirrors the portal's legal pages so visitors can read every policy
+// before signing up. Keep this list in sync with LEGAL_NAV_LINKS in
+// lib/legalContent.ts (or import from there).
 const footerLinks = {
   Platform: [
     { label: "Features", href: "#features" },
@@ -15,14 +19,21 @@ const footerLinks = {
     { label: "Merch", href: "#merch" },
   ],
   Portal: [
-    { label: "Log In", href: PORTAL_LINK },
-    { label: "Pricing", href: PORTAL_LINK },
+    { label: "Log In", href: `${PORTAL_LINK}/login` },
+    { label: "Sign Up", href: `${PORTAL_LINK}/register` },
     { label: "Dashboard", href: PORTAL_LINK },
   ],
   Legal: [
-    { label: "Terms of Service", href: PORTAL_LINK },
-    { label: "Privacy Policy", href: PORTAL_LINK },
-    { label: "Security", href: PORTAL_LINK },
+    { label: "Terms of Service", href: "/legal/terms" },
+    { label: "Privacy Policy", href: "/legal/privacy" },
+    { label: "Cookie Policy", href: "/legal/cookies" },
+    { label: "Acceptable Use", href: "/legal/aup" },
+    { label: "DPA", href: "/legal/dpa" },
+    { label: "Sub-processors", href: "/legal/subprocessors" },
+    { label: "Refund Policy", href: "/legal/refunds" },
+    { label: "SLA", href: "/legal/sla" },
+    { label: "Security", href: "/legal/security" },
+    { label: "Accessibility", href: "/legal/accessibility" },
   ],
 };
 
