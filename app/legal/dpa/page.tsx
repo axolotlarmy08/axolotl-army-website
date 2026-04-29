@@ -381,7 +381,7 @@ export default function DPAPage() {
       <h2>7. Personal Data Breach</h2>
       <p>
         {COMPANY_NAME} will notify the Customer without undue delay, and where
-        feasible <strong>within forty-eight (48) hours</strong> of confirming a
+        feasible within seventy-two (72) hours of confirmation of a
         Personal Data Breach affecting Customer Personal Data. Notification will
         be sent by (a) email to the primary administrator on the
         Customer&apos;s account and (b) an in-portal banner. The notification
@@ -803,12 +803,21 @@ export default function DPAPage() {
           time-bound elevation.
         </li>
         <li>
-          Mandatory two-factor authentication (preferring hardware-backed
-          second factors) for administrator accounts.
+          <strong>Multi-factor authentication.</strong> Production-engineering
+          access at our cloud providers (Vercel, Neon, Cloudflare, Stripe) is
+          gated by 2FA enforced by those providers. Customer-facing 2FA on the
+          Portal application is on the product roadmap; until shipped, we
+          mitigate credential-stuffing with a 5-failure / 15-minute
+          login-attempt lockout per email address.
         </li>
         <li>
-          Tamper-evident audit logs of every privileged administrator action
-          and every security-sensitive event.
+          <strong>Audit logs.</strong> Privileged administrator actions and
+          security-sensitive events (logins, password changes, role changes,
+          billing actions, manual data deletions, OAuth grants and
+          revocations) are recorded in an <code>AuditLog</code> table stored
+          in our managed Postgres database with continuous point-in-time
+          recovery. Logs are append-only in operation but are not
+          cryptographically tamper-evident.
         </li>
       </ul>
 
@@ -929,7 +938,7 @@ export default function DPAPage() {
       <ul>
         <li>
           A documented incident response runbook with defined severity tiers,
-          escalation paths, on-call rotation, and a 48-hour Personal Data
+          escalation paths, on-call rotation, and a 72-hour Personal Data
           Breach notification commitment (Section 7).
         </li>
         <li>

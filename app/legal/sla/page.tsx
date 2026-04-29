@@ -191,12 +191,12 @@ export default function SlaPage() {
         a service credit becomes due.
       </p>
       <p>
-        Uptime is measured by our internal uptime monitor and recorded in
-        the <code>UptimeIncident</code> model. Where you operate your own
-        monitor and our records disagree with yours, we will compare logs in
-        good faith; our internal records are authoritative for the purposes
-        of calculating service credits but we will share the relevant
-        excerpts on request when a credit dispute arises.
+        <strong>How uptime is measured.</strong> Uptime is measured by
+        external monitoring (Vercel&apos;s built-in uptime monitor and our
+        edge analytics). On request when a service-credit dispute arises we
+        will share the relevant monitoring extracts. Internal models in our
+        codebase that reference uptime data exist for forward compatibility
+        and do not currently drive credit calculations.
       </p>
 
       <h2>4. Service credits (Enterprise only)</h2>
@@ -352,8 +352,10 @@ export default function SlaPage() {
           triaged.
         </li>
         <li>
-          <strong>Slack Connect</strong> shared channel for Enterprise
-          customers — set up during onboarding.
+          For Enterprise customers we will set up a shared communication
+          channel (Slack Connect or similar) on request during onboarding.
+          This is provisioned manually rather than via product-side
+          automation.
         </li>
       </ul>
       <p>
@@ -365,30 +367,14 @@ export default function SlaPage() {
 
       <h2>7. Data durability and backup</h2>
       <p>
-        Customer data is stored in a managed PostgreSQL database hosted by
-        Neon. Backups are performed continuously through Neon&apos;s
-        point-in-time recovery (PITR), allowing us to restore the database
-        to any moment within the retention window.
+        <strong>Backups and recovery.</strong> The Service runs on
+        Neon-managed Postgres with continuous point-in-time recovery
+        enabled. Recovery window depends on our Neon plan and applies
+        uniformly across customer data &mdash; there is no per-tier
+        difference in PITR retention. Operator note: when this contract is
+        signed for Enterprise customers, our then-current Neon plan and PITR
+        window are disclosed in the order form.
       </p>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Plan</th>
-            <th>PITR retention</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Starter / Pro / Premium</td>
-            <td>6 hours (Neon free tier)</td>
-          </tr>
-          <tr>
-            <td>Enterprise</td>
-            <td>30 days (Neon Pro tier)</td>
-          </tr>
-        </tbody>
-      </table>
 
       <p>
         We test restore procedures <strong>quarterly</strong> by spinning

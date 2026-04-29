@@ -181,6 +181,20 @@ export const SUB_PROCESSORS: SubProcessor[] = [
     dataCategories: ["Stack traces", "Hashed user IDs", "Request URLs (sanitized)"],
     url: "https://sentry.io/privacy/",
   },
+  {
+    name: "Cloudinary",
+    purpose: "Legacy media-asset CDN used as a fallback path during the Phase 71 migration to native Cloudflare R2 storage. New uploads go to R2; Cloudinary still hosts some historical assets and is consulted when an R2 fetch fails.",
+    location: "United States, European Union.",
+    dataCategories: ["Generated and uploaded media (images, video frames)"],
+    url: "https://cloudinary.com/privacy",
+  },
+  {
+    name: "Creatomate",
+    purpose: "Server-side video rendering fallback. New rendering jobs prefer the native Remotion-based renderer; Creatomate is the documented fallback when the native worker is unavailable.",
+    location: "United States, European Union.",
+    dataCategories: ["Source video clips", "Render templates", "Rendered output"],
+    url: "https://creatomate.com/privacy",
+  },
 ];
 
 /**
@@ -200,28 +214,28 @@ export const DATA_CATEGORIES: DataCategory[] = [
     key: "account",
     label: "Account data",
     description: "Email address, display name, hashed password (never plaintext), portal role, login timestamps.",
-    retention: "For the life of the account plus 30 days after deletion.",
+    retention: "Kept for the life of the account. Removed when you submit a deletion request via Settings → Privacy & Data; an operator processes the request and confirms deletion within 30 days.",
     lawfulBasis: "Performance of the contract (GDPR Art. 6(1)(b)).",
   },
   {
     key: "billing",
     label: "Billing data",
     description: "Stripe customer ID, subscription tier, invoice history, payment status. We do not store full card numbers — Stripe holds them under PCI-DSS.",
-    retention: "Seven (7) years after final invoice (US tax / SOX retention).",
+    retention: "Seven (7) years after final invoice (US tax / SOX retention). Retained even after account deletion to satisfy the legal-hold exception.",
     lawfulBasis: "Performance of the contract and legal obligation (GDPR Art. 6(1)(b) and (c)).",
   },
   {
     key: "content",
     label: "Generated and uploaded content",
     description: "Prompts you write, videos you generate, images you upload, social captions, brand profile, lead lists, contact records, outbound emails sent through connected mailboxes.",
-    retention: "While the account is active. Deleted within 30 days of account closure unless legal hold applies.",
+    retention: "Kept while the account exists. Removed when you submit a deletion request via Settings → Privacy & Data; an operator processes the request and confirms deletion within 30 days. Subscription cancellation alone does not delete content — re-subscribing always restores access to whatever was on the account.",
     lawfulBasis: "Performance of the contract (GDPR Art. 6(1)(b)).",
   },
   {
     key: "operational",
     label: "Operational logs",
     description: "Request logs, error reports, audit trails (who did what when), rate-limit counters, security events.",
-    retention: "Ninety (90) days for verbose logs; permanent for audit trails of security-sensitive actions.",
+    retention: "Retained per the configuration of our log aggregator (Vercel) and error monitor (native error reporter / Sentry); typical retention is 30–90 days. AuditLog rows recording security-sensitive actions are retained for the life of the account.",
     lawfulBasis: "Legitimate interest in security and reliability (GDPR Art. 6(1)(f)).",
   },
   {

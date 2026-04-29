@@ -134,9 +134,15 @@ export default function PrivacyPage() {
       <p>
         <strong>We never sell your personal data and we never use it for
         advertising.</strong> We do not run third-party tracking pixels or
-        advertising cookies on the portal. We do not allow our AI sub-processors
-        (Anthropic, OpenAI, ElevenLabs, Kie.ai, Runway, Deepgram) to retain
-        your prompts or content for their own model training.
+        advertising cookies on the portal.
+      </p>
+      <p>
+        <strong>AI inference providers.</strong> Inference is performed by
+        third-party providers under their default API terms (the
+        providers&apos; published policies generally exclude API traffic from
+        training). We have not separately negotiated zero-retention contracts.
+        See <a href="/legal/subprocessors">/legal/subprocessors</a> for each
+        provider and the link to their policy.
       </p>
 
       <h2>4. Google API Services — Limited Use Disclosure</h2>
@@ -201,8 +207,9 @@ export default function PrivacyPage() {
         >
           myaccount.google.com/permissions
         </a>
-        . When you disconnect, we delete the stored OAuth refresh token within
-        24 hours and stop calling Google APIs on your behalf.
+        . When you disconnect a Google or Microsoft account, we delete the
+        stored OAuth refresh token immediately and stop calling those APIs
+        on your behalf.
       </p>
 
       <h2>5. Sub-processors</h2>
@@ -386,8 +393,8 @@ export default function PrivacyPage() {
       </p>
       <ul>
         <li>
-          <strong>Encryption in transit.</strong> TLS 1.2+ for every connection
-          between your browser, the portal, and our sub-processors.
+          <strong>Encryption in transit.</strong> TLS 1.2 or higher for every
+          connection between your browser, the portal, and our sub-processors.
         </li>
         <li>
           <strong>Encryption at rest.</strong> OAuth refresh tokens for
@@ -398,8 +405,15 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Access controls.</strong> Role-based access for engineering
-          (OWNER, ADMIN, MEMBER), single sign-on, hardware-backed 2FA, and
-          per-action audit logs.
+          (OWNER, ADMIN, MEMBER), single sign-on, and per-action audit logs.
+          Multi-factor authentication on production-engineering access at our
+          cloud providers (Vercel, Neon, Cloudflare, Stripe) is enforced
+          through those providers&apos; own 2FA controls. Customer-facing 2FA
+          on the Portal application is on our roadmap; until then we mitigate
+          credential-stuffing with a 5-failure / 15-minute login-attempt
+          lockout per email address (see{" "}
+          <code>lib/loginAttempts.ts</code>) and require email verification
+          at signup.
         </li>
         <li>
           <strong>Vendor due diligence.</strong> We require SOC 2 Type II,
@@ -407,10 +421,11 @@ export default function PrivacyPage() {
           significant personal data, where commercially available.
         </li>
         <li>
-          <strong>Incident response.</strong> If a breach affects your data we
-          will notify you and the relevant supervisory authorities within the
-          timelines required by law (within 72 hours for GDPR notifications).
-          Report suspected vulnerabilities to{" "}
+          <strong>Incident response.</strong> We will notify affected
+          customers and, where required, supervisory authorities within the
+          timelines required by law &mdash; within seventy-two (72) hours of
+          confirmation for GDPR notifications (Article 33). Report suspected
+          vulnerabilities to{" "}
           <a href={`mailto:${SECURITY_EMAIL}`}>{SECURITY_EMAIL}</a>.
         </li>
       </ul>

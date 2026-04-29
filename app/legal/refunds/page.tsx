@@ -117,11 +117,15 @@ export default function RefundsPage() {
 
       <h3>2.4 Re-enabling a cancelled account</h3>
       <p>
-        You can re-subscribe to any tier at any time. If you re-subscribe
-        within <strong>30 days</strong> of cancellation we restore your
-        existing data (videos, projects, brand profile, contacts, leads,
-        templates, history). After 30 days, account data is deleted in
-        accordance with our Privacy Policy and cannot be recovered.
+        You can re-subscribe to any tier at any time. Cancellation does
+        not delete your existing data — your videos, projects, brand
+        profile, contacts, leads, templates, and history remain on the
+        account, and re-subscribing restores access to all of it. To
+        permanently remove your data, submit a deletion request via
+        Settings &rarr; Privacy &amp; Data (or email{" "}
+        <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>); an operator
+        processes the request and confirms deletion within 30 days. We do
+        not currently auto-delete cancelled accounts on a timer.
       </p>
 
       <h2>3. Subscriptions are non-refundable</h2>
@@ -202,10 +206,11 @@ export default function RefundsPage() {
           Forgetting to cancel is not by itself a basis for a refund.
         </li>
         <li>
-          <strong>Repeat or serial signups.</strong> Refund eligibility is
-          tracked per individual, payment method, and account family. We
-          may decline refunds where it appears the same person has
-          repeatedly signed up to consume credits and request a refund.
+          <strong>Repeat or serial signups.</strong> Where, in our
+          reasonable judgement, the same customer has signed up multiple
+          times to consume credits and reverse charges, we may decline
+          further refund requests and may decline to provide the Service to
+          that customer in future.
         </li>
       </ul>
 
@@ -250,13 +255,11 @@ export default function RefundsPage() {
 
       <h3>4.2 Auto-renewal</h3>
       <p>
-        Annual plans <strong>auto-renew</strong> for another 12 months at
-        the then-current rate unless cancelled at least{" "}
-        <strong>7 days</strong> before the renewal date. We send a
-        reminder email 30 days before renewal and again 7 days before. To
-        cancel an annual plan ahead of renewal, follow the steps in
-        section 2.1. A renewal that goes through because the customer
-        forgot to cancel is not by itself a basis for a refund.
+        Stripe sends invoice and renewal notifications through your billing
+        email at intervals controlled by your Stripe customer settings. We
+        do not currently send a separate 30-day or 7-day renewal reminder
+        from the Portal itself. Annual plans renew on the anniversary of
+        purchase unless cancelled at any time before renewal.
       </p>
 
       <h2>5. Credit top-ups</h2>
@@ -272,9 +275,11 @@ export default function RefundsPage() {
 
       <h3>5.2 Unused credits</h3>
       <p>
-        Unused credits remain redeemable for <strong>12 months</strong> from
-        the date of purchase. After 12 months, unused credits expire and have
-        no cash value. We send an in-app reminder 30 days before expiry.
+        Unused credits are kept on your account indefinitely while the
+        account is active. We reserve the right to expire balances that have
+        been unused for more than 12 months on 30 days&apos; written notice,
+        but we do not currently apply this rule on a timer &mdash; credits
+        remain redeemable until you actively use them or close your account.
       </p>
 
       <h3>5.3 Refund eligibility for top-ups</h3>
@@ -320,66 +325,75 @@ export default function RefundsPage() {
       <p>
         If a scheduled subscription charge fails (expired card, insufficient
         funds, fraud block, etc.) we follow Stripe&apos;s smart-retry
-        schedule and lock the account in stages. The schedule below is the
-        default; specific timings may differ slightly because Stripe&apos;s
-        smart retry adapts to the issuing bank&apos;s historical decline
-        signals.
+        schedule and step the account through a documented state machine
+        until the balance clears. The actual states, timings, and
+        capabilities are defined in code and reflected in your{" "}
+        <a href={`${PORTAL_DOMAIN}/portal/plan`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/plan</a>{" "}
+        page in real time.
       </p>
 
       <table>
         <thead>
           <tr>
-            <th>Stage</th>
-            <th>Timing</th>
+            <th>State</th>
+            <th>When it triggers</th>
             <th>What happens</th>
             <th>Your access</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Day 0</td>
-            <td>First failed attempt</td>
+            <td>FAILED</td>
+            <td>Day 0 — first failed payment</td>
             <td>
-              Stripe retries automatically per its smart-retry schedule
-              (typically days 3, 5, and 7 after the first decline).
+              Stripe retries automatically per its smart-retry schedule.
+              Banner shown in <code>/portal/plan</code> with a one-click
+              link to the Stripe billing portal.
             </td>
-            <td>Full access</td>
+            <td>Full access during the grace period.</td>
           </tr>
           <tr>
-            <td>Day 7</td>
-            <td>Subscription marked FAILED</td>
+            <td>LOCKED</td>
+            <td>Day 3 of FAILED status</td>
             <td>
-              Banner shown in <code>/portal/plan</code> with a one-click link
-              to the Stripe billing portal.
+              Portal access is blocked. You can still buy credits (i.e.,
+              pay the overdue balance) so the account can be restored,
+              but generation, publishing, and editor features are paused.
             </td>
-            <td>Full access</td>
+            <td>Restricted — only the billing surface remains usable.</td>
           </tr>
           <tr>
-            <td>Day 14</td>
-            <td>Account locked</td>
+            <td>SUSPENDED</td>
+            <td>Day 7 of FAILED status</td>
             <td>
-              Account becomes read-only: existing content is visible, but
-              generation, publishing, and outreach are paused.
+              Outbound social publishing is paused (your scheduled slots
+              are pulled). Portal access, AI generation, credit top-ups,
+              and the editor continue to work, so any further outreach
+              must be sent through your own connected mailbox rather than
+              through us until the balance clears.
             </td>
-            <td>Read-only</td>
+            <td>Partial — publishing blocked, everything else works.</td>
           </tr>
           <tr>
-            <td>Day 21</td>
-            <td>Access revoked</td>
+            <td>CANCELLED</td>
+            <td>Manual cancellation by you, or by us if the balance remains unpaid</td>
             <td>
-              Subscription is closed. Account data is retained for{" "}
-              <strong>30 more days</strong> before deletion to allow recovery
-              if you settle the balance.
+              Subscription is closed. Access ends and we stop billing.
+              Existing data remains on the account; see section 2.4 for
+              how to remove it.
             </td>
-            <td>Locked out</td>
+            <td>None — re-subscribing restores access.</td>
           </tr>
         </tbody>
       </table>
 
       <p>
-        You can update the payment method at any stage from the Stripe
-        billing portal linked inside <code>/portal/plan</code>. Once the
-        outstanding balance is paid, full access is restored within minutes.
+        Updating the payment method at any stage (from the Stripe billing
+        portal linked inside <code>/portal/plan</code>) clears the failure
+        and restores the account to <code>CURRENT</code> within minutes.
+        We do not currently auto-cancel subscriptions on extended
+        non-payment — accounts can sit in <code>SUSPENDED</code> until you
+        either resolve the payment or cancel.
       </p>
 
       <h2>7. Chargebacks</h2>

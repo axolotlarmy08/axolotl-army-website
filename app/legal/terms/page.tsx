@@ -179,12 +179,14 @@ export default function TermsPage() {
       <p>
         Some Portal features (notably AI video generation) consume credits at
         rates listed in the in-app cost map. Credits granted as part of a paid
-        subscription are usable while your subscription is active and for up
-        to 12 months after they are issued; after that buffer, unused credits
-        expire. Credits granted promotionally or as a courtesy may have
-        shorter expiry, which we will note when issued. Credits have no cash
-        value and are not redeemable for refunds except where required by law
-        or by our{" "}
+        subscription are usable while your subscription is active and remain
+        on your account indefinitely while the account exists. We reserve the
+        right to expire balances that have been unused for more than 12
+        months on 30 days&rsquo; written notice, but we do not currently
+        apply this rule on a timer. Credits granted promotionally or as a
+        courtesy may have shorter expiry, which we will note when issued.
+        Credits have no cash value and are not redeemable for refunds
+        except where required by law or by our{" "}
         <Link href="/legal/refunds">Refund Policy</Link>.
       </p>
 
@@ -197,21 +199,28 @@ export default function TermsPage() {
       </p>
       <ul>
         <li>
-          <strong>FAILED day 1&ndash;6:</strong> we retry; full access is
-          preserved.
+          <strong>FAILED — day 0 onward:</strong> Stripe retries
+          automatically per its smart-retry schedule; full access is
+          preserved during the grace window.
         </li>
         <li>
-          <strong>SUSPENDED after 7 days of FAILED status:</strong> outbound
-          publishing and AI generation are paused; data and exports remain
-          available.
+          <strong>LOCKED — after 3 days of FAILED status:</strong> portal
+          access is blocked; you can still pay the overdue balance from
+          the Stripe billing portal so the account can be restored.
+          Generation, publishing, and editor features are paused.
         </li>
         <li>
-          <strong>LOCKED after 14 days:</strong> only billing actions and data
-          export remain available.
+          <strong>SUSPENDED — after 7 days of FAILED status:</strong>{" "}
+          outbound social publishing is paused (your scheduled slots are
+          pulled). Portal access, AI generation, credit top-ups, and
+          editor features continue to work.
         </li>
         <li>
-          <strong>REVOKED after 21 days:</strong> Service access is fully
-          revoked. Data is retained per Section 15 below for the grace period.
+          <strong>CANCELLED:</strong> if you cancel manually or we cancel
+          for non-payment, the subscription closes and access ends. We
+          do not currently auto-cancel on extended non-payment;
+          accounts can sit in <code>SUSPENDED</code> until you either
+          resolve the payment or cancel.
         </li>
       </ul>
       <p>
@@ -296,13 +305,15 @@ export default function TermsPage() {
           does not identify you or any individual.
         </li>
         <li>
-          <strong>Model training.</strong> We do not train AI models on your
-          Customer Content. Inference is performed by third-party model
-          providers (currently Anthropic, OpenAI, ElevenLabs, Kie.ai, Runway,
-          and Deepgram, among others). Their handling of your prompts and
-          outputs is governed by their own terms; where the provider offers a
-          &ldquo;no-retention&rdquo; or &ldquo;zero data retention&rdquo;
-          mode, we use it.
+          <strong>Model training.</strong> We do not train our own AI models
+          on your Customer Content. Inference is performed by third-party
+          model providers (Anthropic, OpenAI, ElevenLabs, Kie.ai, Runway,
+          Deepgram) under their default API terms &mdash; for each of these
+          providers, API traffic is excluded from model training as a matter
+          of their published policy. We have not negotiated additional
+          zero-retention contracts beyond those default terms. Each
+          provider&rsquo;s policy is linked from our Sub-processor list at{" "}
+          <Link href="/legal/subprocessors">/legal/subprocessors</Link>.
         </li>
       </ul>
 
@@ -435,15 +446,18 @@ export default function TermsPage() {
           <a href={`${PORTAL_DOMAIN}/portal/settings`} target="_blank" rel="noreferrer noopener">portal.axolotlarmy.net/portal/settings</a>.
         </li>
         <li>
-          <strong>Effect of termination.</strong> After termination you have a
-          30-day grace period to export your data through the in-Portal
-          export tools or by emailing{" "}
-          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>. After the
-          grace period your Customer Content is deleted, subject to backups,
-          legal-hold obligations, and the retention windows in our Privacy
-          Policy. Provisions that by their nature should survive termination
-          (for example, IP, confidentiality, disclaimers, limitation of
-          liability, indemnity, and dispute resolution) survive.
+          <strong>Effect of termination.</strong> When you cancel, your access
+          ends at the end of the period you have already paid for and we stop
+          billing you. Cancellation does not delete your existing data
+          &mdash; your videos, content, leads, and history remain on the
+          account so that re-subscribing always restores access. To remove
+          your data, submit a deletion request via Settings &rarr; Privacy
+          &amp; Data (or email{" "}
+          <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>); an operator
+          processes the request and confirms deletion within 30 days. Subject
+          to the legal-hold exception (e.g. invoice records retained for tax
+          and SOX purposes), all Customer Content is then permanently
+          removed.
         </li>
       </ul>
 

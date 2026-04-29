@@ -101,10 +101,15 @@ export default function AupPage() {
         <li>
           Use the Service to send spam. Cold outreach is permitted only when
           it follows the rules in Section 4 below. The Lead Finder outreach
-          features include built-in CAN-SPAM and GDPR-compliant unsubscribe
-          handling, suppression lists, mailbox warmup, domain throttling,
-          and circuit breakers; you may not bypass, suppress, or work around
-          any of those guardrails.
+          features include built-in unsubscribe handling (RFC 8058 one-click
+          + footer link), suppression lists, mailbox warmup, domain-level
+          send caps, deliverability throttling, and bounce-rate circuit
+          breakers. CAN-SPAM and GDPR additionally require you to include a
+          valid physical postal address, accurate sender identification, and
+          a documented lawful basis (consent or legitimate interest) in your
+          outreach copy and process &mdash; those obligations are yours as
+          the sender. You may not bypass, suppress, or work around the
+          platform guardrails.
         </li>
         <li>
           Share login credentials or use one account for multiple humans.

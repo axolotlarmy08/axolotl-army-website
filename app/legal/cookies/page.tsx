@@ -109,7 +109,7 @@ export default function CookiesPage() {
           <tbody>
             <tr className="border-b border-portal-line-soft/40 align-top text-[#ddd]">
               <td className="py-3 pr-3 font-medium text-white">
-                <code>next-auth.session-token</code>
+                <code>authjs.session-token</code>
               </td>
               <td className="py-3 pr-3">
                 Authenticated session. Identifies your signed-in account so
@@ -121,7 +121,7 @@ export default function CookiesPage() {
             </tr>
             <tr className="border-b border-portal-line-soft/40 align-top text-[#ddd]">
               <td className="py-3 pr-3 font-medium text-white">
-                <code>next-auth.csrf-token</code>
+                <code>authjs.csrf-token</code>
               </td>
               <td className="py-3 pr-3">
                 Cross-site request forgery defense for sign-in and account
@@ -133,7 +133,7 @@ export default function CookiesPage() {
             </tr>
             <tr className="border-b border-portal-line-soft/40 align-top text-[#ddd]">
               <td className="py-3 pr-3 font-medium text-white">
-                <code>next-auth.callback-url</code>
+                <code>authjs.callback-url</code>
               </td>
               <td className="py-3 pr-3">
                 Remembers the page you were trying to reach so we can return
@@ -145,7 +145,7 @@ export default function CookiesPage() {
             </tr>
             <tr className="border-b border-portal-line-soft/40 align-top text-[#ddd]">
               <td className="py-3 pr-3 font-medium text-white">
-                <code>__Secure-next-auth.session-token</code>
+                <code>__Secure-authjs.session-token</code>
               </td>
               <td className="py-3 pr-3">
                 Production-mode equivalent of the session cookie above. Sent
@@ -157,7 +157,7 @@ export default function CookiesPage() {
             </tr>
             <tr className="border-b border-portal-line-soft/40 align-top text-[#ddd]">
               <td className="py-3 pr-3 font-medium text-white">
-                <code>__Secure-next-auth.csrf-token</code>
+                <code>__Secure-authjs.csrf-token</code>
               </td>
               <td className="py-3 pr-3">Production-mode CSRF cookie.</td>
               <td className="py-3 pr-3">Session</td>
@@ -166,7 +166,7 @@ export default function CookiesPage() {
             </tr>
             <tr className="border-b border-portal-line-soft/40 align-top text-[#ddd]">
               <td className="py-3 pr-3 font-medium text-white">
-                <code>__Secure-next-auth.callback-url</code>
+                <code>__Secure-authjs.callback-url</code>
               </td>
               <td className="py-3 pr-3">
                 Production-mode callback URL helper. Sent only over HTTPS.

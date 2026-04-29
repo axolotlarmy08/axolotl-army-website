@@ -83,10 +83,12 @@ export default function AccessibilityPage() {
 
       <h2>Continuous improvement</h2>
       <p>
-        Accessibility is part of our PR review checklist. New features ship
-        with keyboard support, focus management, and screen-reader-friendly
-        copy. We re-test the most-used flows quarterly using both automated
-        tooling (axe-core) and manual screen-reader walk-throughs.
+        <strong>Continuous improvement.</strong> Accessibility is part of
+        our PR review checklist. New features ship with keyboard support,
+        focus management, and screen-reader-friendly copy. We test critical
+        flows manually with assistive technologies before each release. We
+        have not yet integrated automated accessibility scanning (e.g.
+        axe-core) into CI; that is on our roadmap.
       </p>
     </>
   );

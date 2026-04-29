@@ -99,8 +99,8 @@ export default function SecurityPage() {
         <li>Dependency vulnerability scanning (npm audit, GitHub Dependabot, custom typosquat checks).</li>
         <li>Annual third-party penetration test (planned).</li>
         <li>Continuous monitoring (uptime, error tracking, security event logs).</li>
-        <li>Encryption: TLS 1.3 in transit; AES-256-GCM at rest for OAuth refresh tokens; bcrypt for passwords.</li>
-        <li>Incident response runbook with 48-hour breach notification commitment.</li>
+        <li>Encryption: TLS 1.2 or higher in transit; AES-256-GCM at rest for OAuth refresh tokens; bcrypt for passwords.</li>
+        <li>Incident response runbook with 72-hour breach notification commitment.</li>
         <li>Annual security training for engineers; quarterly phishing simulation.</li>
       </ul>
 
