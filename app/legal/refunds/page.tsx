@@ -115,17 +115,32 @@ export default function RefundsPage() {
         contact <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>.
       </p>
 
-      <h3>2.4 Re-enabling a cancelled account</h3>
+      <h3>2.4 Re-enabling a cancelled account — the 30-day grace</h3>
       <p>
-        You can re-subscribe to any tier at any time. Cancellation does
-        not delete your existing data — your videos, projects, brand
-        profile, contacts, leads, templates, and history remain on the
-        account, and re-subscribing restores access to all of it. To
-        permanently remove your data, submit a deletion request via
-        Settings &rarr; Privacy &amp; Data (or email{" "}
-        <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>); an operator
-        processes the request and confirms deletion within 30 days. We do
-        not currently auto-delete cancelled accounts on a timer.
+        When your last active subscription cancels, your account enters a{" "}
+        <strong>30-day grace period</strong>. Your videos, projects,
+        brand profile, contacts, leads, templates, and history remain
+        on the account during the grace period. If you re-subscribe to
+        any tier within those 30 days, the grace timer is cleared
+        automatically and you regain access to everything as it was.
+      </p>
+      <p>
+        After the 30-day grace period elapses, your customer content is{" "}
+        <strong>permanently deleted</strong> in a daily automated sweep:
+        videos, leads, contacts, brand profile, calendar events,
+        scheduled posts, templates, AXY conversations, and OAuth refresh
+        tokens for your connected mailboxes and calendars are all
+        removed. The account row remains as a tombstone (with PII
+        nulled) so we can satisfy the legal-hold exception for invoices
+        and payment records — those are retained per US tax / SOX rules
+        for seven (7) years even after deletion.
+      </p>
+      <p>
+        If you want to remove your data <strong>before</strong> the 30
+        days are up, submit a deletion request via Settings &rarr;
+        Privacy &amp; Data (or email{" "}
+        <a href={`mailto:${LEGAL_EMAIL}`}>{LEGAL_EMAIL}</a>) and an
+        operator will process it sooner.
       </p>
 
       <h2>3. Subscriptions are non-refundable</h2>

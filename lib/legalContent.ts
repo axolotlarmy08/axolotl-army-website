@@ -214,7 +214,7 @@ export const DATA_CATEGORIES: DataCategory[] = [
     key: "account",
     label: "Account data",
     description: "Email address, display name, hashed password (never plaintext), portal role, login timestamps.",
-    retention: "Kept for the life of the account. Removed when you submit a deletion request via Settings → Privacy & Data; an operator processes the request and confirms deletion within 30 days.",
+    retention: "Kept for the life of the account. When your last active subscription cancels you enter a 30-day grace period; if you do not re-subscribe, content is hard-deleted by an automated daily sweep and the account row is left as a tombstone with PII nulled. You can also submit a deletion request from Settings → Privacy & Data to remove the data sooner.",
     lawfulBasis: "Performance of the contract (GDPR Art. 6(1)(b)).",
   },
   {
@@ -228,7 +228,7 @@ export const DATA_CATEGORIES: DataCategory[] = [
     key: "content",
     label: "Generated and uploaded content",
     description: "Prompts you write, videos you generate, images you upload, social captions, brand profile, lead lists, contact records, outbound emails sent through connected mailboxes.",
-    retention: "Kept while the account exists. Removed when you submit a deletion request via Settings → Privacy & Data; an operator processes the request and confirms deletion within 30 days. Subscription cancellation alone does not delete content — re-subscribing always restores access to whatever was on the account.",
+    retention: "Kept while the account is active. When your last active subscription cancels, content remains on the account for a 30-day grace period (so re-subscribing within that window restores access). If you do not re-subscribe, content is hard-deleted by the automated daily sweep at the end of the grace period.",
     lawfulBasis: "Performance of the contract (GDPR Art. 6(1)(b)).",
   },
   {
