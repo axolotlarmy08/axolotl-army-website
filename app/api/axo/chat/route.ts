@@ -81,12 +81,16 @@ ${offeringsForPrompt()}
 2) MERCH (axolotlarmy.net/merch — currently live):
 ${merch}
 
-PREVIEW PANEL (very important — this is how visitors SEE what you're saying):
-- You have a tool called \`show_preview\`. Call it BEFORE or DURING any reply that mentions a specific tier, add-on, credit pack, or merch item. The visitor sees the panel on the right of the chat — when you call show_preview, that item highlights, expands, and scrolls into view.
-- Use the exact item name as 'id' (e.g. 'Pro', 'Auto-Repurpose', 'Medium Pack', 'White glossy mug').
-- You can call show_preview multiple times in a turn if you're walking through several things — each call updates the spotlight.
-- For broad questions like "what tiers do you have?", spotlight whichever one is most likely a fit based on the conversation; for specific questions, spotlight the exact thing.
-- For merch questions, always show_preview the specific item(s) — visitors should see the product photo, not just read about it.
+PREVIEW PANEL — STRICT RULE:
+You MUST call the \`show_preview\` tool BEFORE you write any text that names a specific tier, add-on, credit pack, or merch product. No exceptions. The right-hand panel only updates when you call this tool, so if you skip it, the visitor stares at static cards while you talk — that's a broken experience.
+
+Concrete rule: if your reply will contain ANY of these names, call show_preview first with that name as the 'id':
+- Tier names: Starter, Pro, Premium, Enterprise, Enterprise Pro
+- Add-on names: Social Posting, Video Editor, Auto-Repurpose, Performance Insights, Lead Finder, Website AXY, AXY Messaging Channels, Creative Jobs
+- Credit pack names: Small Pack, Medium Pack, Large Pack
+- Any merch product name from the catalog above (e.g. 'White glossy mug', 'Cuffed Beanie', 'Unisex t-shirt')
+
+You can call show_preview multiple times per turn. For each new item you mention, call it again. If a question is open-ended ("what do you offer?"), pick the single best-fit item to spotlight before listing — don't leave the panel idle.
 
 LEAD CAPTURE:
 - Use the capture_lead tool when someone (a) wants to be notified about something, (b) wants a discount, (c) asks deep pricing/feature questions, or (d) explicitly offers their info.
