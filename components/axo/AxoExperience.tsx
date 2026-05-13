@@ -14,8 +14,17 @@ type LeadCaptured = {
   interest?: string;
 };
 
+type MerchProduct = {
+  syncProductId: number;
+  name: string;
+  thumbnail: string;
+  startingPrice: number;
+};
+
 export default function AxoExperience() {
   const [opened, setOpened] = useState(false);
+  const [merch, setMerch] = useState<MerchProduct[] | null>(null);
+  const merchSectionRef = useRef<HTMLElement>(null);
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
@@ -34,6 +43,33 @@ export default function AxoExperience() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Lazy-load merch only after the user opens the experience — no need to
+  // hit Printful for visitors who never click Try AXO.
+  useEffect(() => {
+    if (!opened || merch !== null) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/printful/products");
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          products: Array<{
+            syncProductId: number;
+            name: string;
+            thumbnail: string;
+            startingPrice: number;
+          }>;
+        };
+        if (!cancelled) setMerch(data.products ?? []);
+      } catch {
+        if (!cancelled) setMerch([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [opened, merch]);
 
   // Heuristic focus — highlight the panel card whose keywords appear in the
   // latest assistant message. Lightweight, no extra API roundtrip.
@@ -54,6 +90,12 @@ export default function AxoExperience() {
     for (const [k, words] of keys) {
       if (words.some((w) => text.includes(w))) {
         setFocusKey(k);
+        if (k === "merch") {
+          merchSectionRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
         return;
       }
     }
@@ -327,6 +369,52 @@ export default function AxoExperience() {
                   </div>
                 ))}
               </div>
+            </section>
+
+            <section
+              ref={merchSectionRef}
+              className={`mb-6 rounded-xl transition ${
+                focusKey === "merch" ? "ring-1 ring-white/30 p-2 -mx-2" : ""
+              }`}
+            >
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-3">
+                Merch
+              </h3>
+              {merch === null ? (
+                <div className="text-sm text-white/40">Loading merch…</div>
+              ) : merch.length === 0 ? (
+                <div className="text-sm text-white/40">No merch live right now.</div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {merch.map((p) => (
+                    <a
+                      key={p.syncProductId}
+                      href="/merch"
+                      className="group rounded-lg border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/30 transition"
+                    >
+                      <div className="relative aspect-square bg-white/5">
+                        {p.thumbnail && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={p.thumbnail}
+                            alt={p.name}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition"
+                            loading="lazy"
+                          />
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <div className="text-xs text-white/90 line-clamp-2">
+                          {p.name}
+                        </div>
+                        <div className="text-xs text-white/50 mt-0.5">
+                          from ${p.startingPrice}
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="mb-2">
