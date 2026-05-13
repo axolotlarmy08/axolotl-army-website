@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // @react-pdf/renderer ships its own font/canvas code that doesn't tree-shake
+  // well — keeping it external for the server bundle avoids cold-start bloat.
+  serverExternalPackages: ["@react-pdf/renderer"],
   images: {
     remotePatterns: [
       {
