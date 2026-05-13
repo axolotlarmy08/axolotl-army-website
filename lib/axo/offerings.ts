@@ -5,14 +5,6 @@
  * this is a static snapshot for the marketing site.
  */
 
-export interface AxoTier {
-  name: string;
-  monthlyPrice: number;
-  creditsUsd: number | null;
-  tagline: string;
-  highlights: string[];
-}
-
 export interface AxoAddon {
   name: string;
   monthlyPrice: number;
@@ -26,6 +18,15 @@ export interface AxoCreditPack {
   blurb: string;
 }
 
+export interface AxoTier {
+  name: string;
+  monthlyPrice: number;
+  creditsUsd: number | null;
+  tagline: string;
+  highlights: string[];
+  notIncluded?: string[];
+}
+
 export const AXO_TIERS: AxoTier[] = [
   {
     name: "Starter",
@@ -33,11 +34,26 @@ export const AXO_TIERS: AxoTier[] = [
     creditsUsd: null,
     tagline: "Free portal access. Try the video generators, pay per credit.",
     highlights: [
-      "8s / 30s / 60s AI video generation",
-      "Thumbnail previews",
-      "Trend Radar (always free)",
-      "Vector Maker",
-      "Pay-as-you-go credits",
+      "Portal access",
+      "AI video generation: 8s, 30s, 60s",
+      "Thumbnail PREVIEWS only (cannot download — that's gated to Pro+)",
+      "Trend Radar (always free, every tier)",
+      "Vector Maker (always free, every tier)",
+      "Pay-as-you-go credits (buy credit packs separately)",
+      "No included monthly credits",
+    ],
+    notIncluded: [
+      "Thumbnail downloads (Pro+)",
+      "Character-consistent video / Seedance 2.0 (Pro+)",
+      "Auto-posting to social platforms (Pro+)",
+      "Content Briefs (Pro+)",
+      "Outbound invoicing (Pro+)",
+      "Revenue attribution (Pro+)",
+      "AXY assistant (Premium+)",
+      "Video Editor (Premium+)",
+      "Auto-Repurpose (Premium+)",
+      "Performance Insights (Premium+)",
+      "Lead Generator (Enterprise+)",
     ],
   },
   {
@@ -49,12 +65,21 @@ export const AXO_TIERS: AxoTier[] = [
     highlights: [
       "Everything in Starter",
       "Character-consistent video (Seedance 2.0)",
-      "Thumbnail downloads",
-      "Auto-post to YouTube, TikTok, IG, Facebook, X",
-      "Content Briefs",
-      "Outbound invoicing",
+      "Thumbnail downloads (full files, not just previews)",
+      "Auto-post to YouTube, TikTok, Instagram, Facebook, X",
+      "Content Briefs (AI-powered topic + hook recommendations)",
+      "Outbound invoicing (bill your own customers from the portal)",
       "Per-video revenue attribution",
       "$20/mo of included credits",
+    ],
+    notIncluded: [
+      "AXY business assistant (Premium+)",
+      "AXY Voice replies (Premium+)",
+      "Video Editor (Premium+)",
+      "Slideshow Maker (Premium+)",
+      "Auto-Repurpose (Premium+)",
+      "Performance Insights (Premium+)",
+      "Lead Generator (Enterprise+)",
     ],
   },
   {
@@ -66,12 +91,19 @@ export const AXO_TIERS: AxoTier[] = [
     highlights: [
       "Everything in Pro",
       "AXY business assistant (chat)",
-      "~140 AXY Voice replies / month",
-      "Video Editor",
+      "~140 AXY Voice replies / month included",
+      "Video Editor (timeline, overlays, captions, exports)",
       "Slideshow Maker",
-      "Auto-Repurpose (1 video → up to 12 platform clips)",
-      "Performance Insights (closed-loop)",
+      "Auto-Repurpose: one video → up to 12 platform-tailored clips",
+      "Performance Insights (closed-loop — wins feed back into new generations)",
       "$100/mo of included credits",
+    ],
+    notIncluded: [
+      "Lead Generator agent (Enterprise+)",
+      "Higher AXY Voice cap (~350/mo on Enterprise)",
+      "Website AXY embed (Enterprise Pro)",
+      "Telegram + WhatsApp channels (Enterprise Pro)",
+      "Creative Jobs (Enterprise Pro)",
     ],
   },
   {
@@ -81,9 +113,15 @@ export const AXO_TIERS: AxoTier[] = [
     tagline: "For businesses that need full automation + lead gen.",
     highlights: [
       "Everything in Premium",
-      "Lead Generator agent (up to 750 leads/mo)",
-      "~350 AXY Voice replies / month",
+      "Lead Generator agent (up to 750 leads/month)",
+      "~350 AXY Voice replies / month included (up from ~140 on Premium)",
       "$300/mo of included credits",
+    ],
+    notIncluded: [
+      "Website AXY embed (Enterprise Pro)",
+      "Telegram + WhatsApp channels (Enterprise Pro)",
+      "Creative Jobs intake (Enterprise Pro)",
+      "Custom workflows + priority support (Enterprise Pro)",
     ],
   },
   {
@@ -94,10 +132,11 @@ export const AXO_TIERS: AxoTier[] = [
       "White-glove. Portal + AXY operator + Website AXY + messaging channels + creative jobs.",
     highlights: [
       "Everything in Enterprise",
-      "Website AXY (embed AXY on your own site)",
-      "Telegram + WhatsApp channels",
-      "Creative Jobs (ads, thumbnails, carousels, slideshows on request)",
+      "Website AXY — embed AXY on your own site",
+      "Telegram + WhatsApp messaging channels",
+      "Creative Jobs: ad images, thumbnails, carousels, slideshows, reels on request",
       "Custom workflows + priority support",
+      "Higher AXY Voice + analysis ceilings (Enterprise Pro tier)",
       "$3,000/mo of included credits",
     ],
   },
@@ -176,12 +215,16 @@ export const AXO_CREDIT_PACKS: AxoCreditPack[] = [
 
 /** Compact text block used inside the AXO system prompt. */
 export function offeringsForPrompt(): string {
-  const tiers = AXO_TIERS.map(
-    (t) =>
-      `- ${t.name} ($${t.monthlyPrice}/mo${
-        t.creditsUsd ? `, includes $${t.creditsUsd}/mo credits` : ""
-      }) — ${t.tagline}\n   • ${t.highlights.join("\n   • ")}`
-  ).join("\n");
+  const tiers = AXO_TIERS.map((t) => {
+    const head = `- ${t.name} ($${t.monthlyPrice}/mo${
+      t.creditsUsd ? `, includes $${t.creditsUsd}/mo credits` : ""
+    }) — ${t.tagline}`;
+    const incl = `  INCLUDED:\n   • ${t.highlights.join("\n   • ")}`;
+    const excl = t.notIncluded?.length
+      ? `\n  NOT INCLUDED (upsell path):\n   • ${t.notIncluded.join("\n   • ")}`
+      : "";
+    return `${head}\n${incl}${excl}`;
+  }).join("\n");
   const addons = AXO_ADDONS.map(
     (a) => `- ${a.name} ($${a.monthlyPrice}/mo) — ${a.blurb}`
   ).join("\n");
