@@ -8,7 +8,6 @@ import {
   type OrderItem,
   type SyncVariant,
 } from "@/lib/printful";
-import { assertRetailCoversCosts } from "@/lib/margins";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -65,8 +64,6 @@ export async function POST(req: NextRequest) {
     const ids = body.items.map((i) => i.syncVariantId);
     const variantMap = await loadSyncVariants(ids);
 
-    const intl = body.shipping.country_code !== "US";
-
     type Line = {
       syncVariantId: number;
       quantity: number;
@@ -85,14 +82,6 @@ export async function POST(req: NextRequest) {
         );
       }
       const retail = parseFloat(v.retail_price);
-      const check = assertRetailCoversCosts(retail, v.variant_id, { intl });
-      if (!check.ok) {
-        console.error("Margin guard rejected line", check);
-        return NextResponse.json(
-          { error: "This item isn't available for purchase right now." },
-          { status: 400 }
-        );
-      }
       lines.push({
         syncVariantId: item.syncVariantId,
         quantity: item.quantity,

@@ -5,7 +5,6 @@ import {
   getCatalogVariants,
   type CatalogVariant,
 } from "@/lib/printful";
-import { assertRetailCoversCosts } from "@/lib/margins";
 import {
   getCatalogColorsFromDb,
   saveCatalogColorsToDb,
@@ -279,15 +278,6 @@ export async function GET() {
           if (!(retailPrice > 0)) {
             console.warn(
               `Sync variant ${v.id} (${v.name}) has no retail_price — hiding`
-            );
-            continue;
-          }
-
-          // Margin guard — skip variants priced below viable
-          const check = assertRetailCoversCosts(retailPrice, v.variant_id);
-          if (!check.ok) {
-            console.warn(
-              `Sync variant ${v.id} (${v.name}) below margin floor: ${check.reason}`
             );
             continue;
           }
