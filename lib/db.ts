@@ -78,7 +78,51 @@ async function ensureSchema() {
     )
   `;
 
+  // Leads captured by the AXO website chat agent. Email is unique so a
+  // returning visitor updates the same row instead of duplicating.
+  await sql`
+    CREATE TABLE IF NOT EXISTS axo_chat_leads (
+      id SERIAL PRIMARY KEY,
+      name TEXT,
+      email TEXT NOT NULL UNIQUE,
+      interest TEXT,
+      transcript_snippet TEXT,
+      source TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+
   schemaInitialized = true;
+}
+
+export async function saveAxoChatLead(input: {
+  name?: string;
+  email: string;
+  interest?: string;
+  transcriptSnippet?: string;
+  source?: string;
+}): Promise<{ inserted: boolean }> {
+  await ensureSchema();
+  const sql = getSql();
+  const email = input.email.toLowerCase().trim();
+  const rows = (await sql`
+    INSERT INTO axo_chat_leads (name, email, interest, transcript_snippet, source)
+    VALUES (
+      ${input.name ?? null},
+      ${email},
+      ${input.interest ?? null},
+      ${input.transcriptSnippet ?? null},
+      ${input.source ?? "axo-chat"}
+    )
+    ON CONFLICT (email) DO UPDATE SET
+      name = COALESCE(EXCLUDED.name, axo_chat_leads.name),
+      interest = COALESCE(EXCLUDED.interest, axo_chat_leads.interest),
+      transcript_snippet = COALESCE(EXCLUDED.transcript_snippet, axo_chat_leads.transcript_snippet),
+      updated_at = NOW()
+    RETURNING (xmax = 0) AS inserted
+  `) as Array<{ inserted: boolean }>;
+  return { inserted: rows[0]?.inserted ?? false };
 }
 
 /* ─── Printful mockup cache ─── */

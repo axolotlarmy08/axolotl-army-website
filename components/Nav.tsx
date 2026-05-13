@@ -21,6 +21,7 @@ const navLinks = [
   { label: "Showreel", href: "/showreel" },
   { label: "Characters", href: "/#characters" },
   { label: "Merch", href: "/merch" },
+  { label: "AXO", href: "/axo" },
 ];
 
 export default function Nav() {
