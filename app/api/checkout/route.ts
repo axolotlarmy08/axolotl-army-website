@@ -144,6 +144,10 @@ export async function POST(req: NextRequest) {
         syncVariantIds: ids.join(","),
       },
       payment_intent_data: {
+        // Stripe Checkout only auto-emails a receipt when this is set
+        // (or when the dashboard "successful payments" toggle is on).
+        // Setting it in code so customers always get a confirmation.
+        receipt_email: body.email,
         // Mirror metadata onto the PaymentIntent so the webhook can find
         // printfulOrderId from either event source.
         metadata: {
