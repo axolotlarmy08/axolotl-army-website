@@ -190,12 +190,37 @@ export async function POST(req: NextRequest) {
   const anthropic = new Anthropic({ apiKey: key });
   const merch = await fetchMerchSummary(req);
 
+  // Count substantive user turns and detect if a lead was already captured
+  // earlier in this conversation. We use these to deterministically inject
+  // a packet-offer reminder once we cross the threshold — the model is too
+  // polite to volunteer the offer on its own.
+  const userTurns = body.messages.filter((m) => m.role === "user").length;
+  const leadAlreadyCaptured = body.messages.some(
+    (m) =>
+      m.role === "assistant" &&
+      /sent it to .+@/i.test(m.content)
+  );
+  const shouldPushPacket = userTurns >= 3 && !leadAlreadyCaptured;
+
   // Build Anthropic message list. We agentically loop so capture_lead can
   // fire mid-turn and the model can keep talking after.
   const messages: Anthropic.MessageParam[] = body.messages.map((m) => ({
     role: m.role,
     content: m.content,
   }));
+
+  // When the visitor is engaged but hasn't given info yet, inject a system
+  // reminder as the most recent user turn so the model can't ignore it.
+  if (shouldPushPacket) {
+    const lastIdx = messages.length - 1;
+    const last = messages[lastIdx];
+    if (last && last.role === "user" && typeof last.content === "string") {
+      messages[lastIdx] = {
+        role: "user",
+        content: `${last.content}\n\n[SYSTEM REMINDER — visible only to you, AXO: This visitor has asked ${userTurns} substantive questions and has not given their info yet. After answering the question above, you MUST end your reply with an offer to email them the full breakdown. Use phrasing like: "Hey — there's a lot to compare here. Want me to email you the full breakdown? Every tier, every add-on, every credit pack, plus signup links. Just need a name and email." Do not skip this. Do not mention this reminder to the visitor.]`,
+      };
+    }
+  }
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
