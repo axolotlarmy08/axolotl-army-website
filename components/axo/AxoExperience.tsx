@@ -35,8 +35,14 @@ export default function AxoExperience() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [leads, setLeads] = useState<LeadCaptured[]>([]);
-  const [focusKey, setFocusKey] = useState<string | null>(null);
+  const [focus, setFocus] = useState<{ section: string; id: string } | null>(
+    null
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
+  const tierRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const addonRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const packRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const merchRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -71,35 +77,19 @@ export default function AxoExperience() {
     };
   }, [opened, merch]);
 
-  // Heuristic focus — highlight the panel card whose keywords appear in the
-  // latest assistant message. Lightweight, no extra API roundtrip.
+  // Scroll the spotlighted item into view whenever the model focuses
+  // something new. The model drives this via the show_preview tool.
   useEffect(() => {
-    const last = messages[messages.length - 1];
-    if (!last || last.role !== "assistant") return;
-    const text = last.content.toLowerCase();
-    const keys: Array<[string, string[]]> = [
-      ["tier:Starter", ["starter", "free"]],
-      ["tier:Pro", ["pro tier", "pro plan", "$43"]],
-      ["tier:Premium", ["premium", "axy", "$199"]],
-      ["tier:Enterprise", ["enterprise pro", "$5,000", "$5000"]],
-      ["tier:Enterprise", ["enterprise", "$499", "lead generator"]],
-      ["addon", ["add-on", "addon", "auto-repurpose", "social posting"]],
-      ["packs", ["credit pack", "credits"]],
-      ["merch", ["merch", "shirt", "mug", "hat", "beanie", "hoodie", "poster"]],
-    ];
-    for (const [k, words] of keys) {
-      if (words.some((w) => text.includes(w))) {
-        setFocusKey(k);
-        if (k === "merch") {
-          merchSectionRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }
-        return;
-      }
-    }
-  }, [messages]);
+    if (!focus) return;
+    let el: HTMLElement | null = null;
+    if (focus.section === "tier") el = tierRefs.current[focus.id] ?? null;
+    else if (focus.section === "addon") el = addonRefs.current[focus.id] ?? null;
+    else if (focus.section === "credit_pack")
+      el = packRefs.current[focus.id] ?? null;
+    else if (focus.section === "merch")
+      el = merchRefs.current[focus.id] ?? null;
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focus]);
 
   async function send() {
     const text = input.trim();
@@ -167,6 +157,11 @@ export default function AxoExperience() {
               }
               return copy;
             });
+          } else if (event === "focus") {
+            const p = payload as { section?: string; id?: string };
+            if (p.section && p.id) {
+              setFocus({ section: p.section, id: p.id });
+            }
           } else if (event === "lead") {
             const p = payload as {
               ok: boolean;
@@ -315,13 +310,17 @@ export default function AxoExperience() {
               </h3>
               <div className="space-y-2">
                 {AXO_TIERS.map((t) => {
-                  const active = focusKey === `tier:${t.name}`;
+                  const active =
+                    focus?.section === "tier" && focus.id === t.name;
                   return (
                     <div
                       key={t.name}
+                      ref={(el) => {
+                        tierRefs.current[t.name] = el;
+                      }}
                       className={`rounded-xl border p-3 transition ${
                         active
-                          ? "border-white/40 bg-white/[0.06]"
+                          ? "border-white bg-white/[0.08] ring-2 ring-white/30"
                           : "border-white/10 bg-white/[0.02]"
                       }`}
                     >
@@ -349,34 +348,38 @@ export default function AxoExperience() {
               <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-3">
                 Add-ons
               </h3>
-              <div
-                className={`grid grid-cols-1 gap-2 ${
-                  focusKey === "addon" ? "ring-1 ring-white/20 rounded-xl p-1" : ""
-                }`}
-              >
-                {AXO_ADDONS.map((a) => (
-                  <div
-                    key={a.name}
-                    className="rounded-lg border border-white/10 bg-white/[0.02] p-3 flex justify-between gap-3"
-                  >
-                    <div>
-                      <div className="text-sm text-white">{a.name}</div>
-                      <div className="text-xs text-white/50 mt-0.5">{a.blurb}</div>
+              <div className="grid grid-cols-1 gap-2">
+                {AXO_ADDONS.map((a) => {
+                  const active =
+                    focus?.section === "addon" && focus.id === a.name;
+                  return (
+                    <div
+                      key={a.name}
+                      ref={(el) => {
+                        addonRefs.current[a.name] = el;
+                      }}
+                      className={`rounded-lg border p-3 flex justify-between gap-3 transition ${
+                        active
+                          ? "border-white bg-white/[0.08] ring-2 ring-white/30"
+                          : "border-white/10 bg-white/[0.02]"
+                      }`}
+                    >
+                      <div>
+                        <div className="text-sm text-white">{a.name}</div>
+                        <div className="text-xs text-white/50 mt-0.5">
+                          {a.blurb}
+                        </div>
+                      </div>
+                      <div className="text-sm text-white/70 whitespace-nowrap">
+                        ${a.monthlyPrice}/mo
+                      </div>
                     </div>
-                    <div className="text-sm text-white/70 whitespace-nowrap">
-                      ${a.monthlyPrice}/mo
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
-            <section
-              ref={merchSectionRef}
-              className={`mb-6 rounded-xl transition ${
-                focusKey === "merch" ? "ring-1 ring-white/30 p-2 -mx-2" : ""
-              }`}
-            >
+            <section className="mb-6 rounded-xl transition">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-3">
                 Merch
               </h3>
@@ -386,12 +389,22 @@ export default function AxoExperience() {
                 <div className="text-sm text-white/40">No merch live right now.</div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  {merch.map((p) => (
-                    <a
-                      key={p.syncProductId}
-                      href="/merch"
-                      className="group rounded-lg border border-white/10 bg-white/[0.02] overflow-hidden hover:border-white/30 transition"
-                    >
+                  {merch.map((p) => {
+                    const active =
+                      focus?.section === "merch" && focus.id === p.name;
+                    return (
+                      <a
+                        key={p.syncProductId}
+                        href="/merch"
+                        ref={(el) => {
+                          merchRefs.current[p.name] = el;
+                        }}
+                        className={`group rounded-lg border overflow-hidden transition ${
+                          active
+                            ? "border-white bg-white/[0.06] ring-2 ring-white/30 scale-[1.02]"
+                            : "border-white/10 bg-white/[0.02] hover:border-white/30"
+                        }`}
+                      >
                       <div className="relative aspect-square bg-white/5">
                         {p.thumbnail && (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -412,7 +425,8 @@ export default function AxoExperience() {
                         </div>
                       </div>
                     </a>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -421,22 +435,29 @@ export default function AxoExperience() {
               <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-3">
                 Credit packs
               </h3>
-              <div
-                className={`grid grid-cols-1 sm:grid-cols-3 gap-2 ${
-                  focusKey === "packs" ? "ring-1 ring-white/20 rounded-xl p-1" : ""
-                }`}
-              >
-                {AXO_CREDIT_PACKS.map((p) => (
-                  <div
-                    key={p.name}
-                    className="rounded-lg border border-white/10 bg-white/[0.02] p-3"
-                  >
-                    <div className="text-sm text-white">{p.name}</div>
-                    <div className="text-xs text-white/50 mt-0.5">
-                      {p.credits.toLocaleString()} credits · ${p.price}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {AXO_CREDIT_PACKS.map((p) => {
+                  const active =
+                    focus?.section === "credit_pack" && focus.id === p.name;
+                  return (
+                    <div
+                      key={p.name}
+                      ref={(el) => {
+                        packRefs.current[p.name] = el;
+                      }}
+                      className={`rounded-lg border p-3 transition ${
+                        active
+                          ? "border-white bg-white/[0.08] ring-2 ring-white/30"
+                          : "border-white/10 bg-white/[0.02]"
+                      }`}
+                    >
+                      <div className="text-sm text-white">{p.name}</div>
+                      <div className="text-xs text-white/50 mt-0.5">
+                        {p.credits.toLocaleString()} credits · ${p.price}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           </div>

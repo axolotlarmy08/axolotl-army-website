@@ -81,6 +81,13 @@ ${offeringsForPrompt()}
 2) MERCH (axolotlarmy.net/merch — currently live):
 ${merch}
 
+PREVIEW PANEL (very important — this is how visitors SEE what you're saying):
+- You have a tool called \`show_preview\`. Call it BEFORE or DURING any reply that mentions a specific tier, add-on, credit pack, or merch item. The visitor sees the panel on the right of the chat — when you call show_preview, that item highlights, expands, and scrolls into view.
+- Use the exact item name as 'id' (e.g. 'Pro', 'Auto-Repurpose', 'Medium Pack', 'White glossy mug').
+- You can call show_preview multiple times in a turn if you're walking through several things — each call updates the spotlight.
+- For broad questions like "what tiers do you have?", spotlight whichever one is most likely a fit based on the conversation; for specific questions, spotlight the exact thing.
+- For merch questions, always show_preview the specific item(s) — visitors should see the product photo, not just read about it.
+
 LEAD CAPTURE:
 - Use the capture_lead tool when someone (a) wants to be notified about something, (b) wants a discount, (c) asks deep pricing/feature questions, or (d) explicitly offers their info.
 - Always confirm with the user before calling the tool. Quote back the email so typos are caught.
@@ -93,6 +100,27 @@ RULES:
 }
 
 const TOOLS: Anthropic.Tool[] = [
+  {
+    name: "show_preview",
+    description:
+      "Spotlight a specific item in the right-hand preview panel so the visitor can see what you're describing. Call this EVERY TIME you talk about a specific tier, add-on, credit pack, or merch product — before or during your reply. The panel will highlight it, expand its details, and scroll it into view.",
+    input_schema: {
+      type: "object",
+      properties: {
+        section: {
+          type: "string",
+          enum: ["tier", "addon", "credit_pack", "merch"],
+          description: "Which section the item lives in.",
+        },
+        id: {
+          type: "string",
+          description:
+            "The item's exact name. Tiers: 'Starter' | 'Pro' | 'Premium' | 'Enterprise' | 'Enterprise Pro'. Add-ons: 'Social Posting' | 'Video Editor' | 'Auto-Repurpose' | 'Performance Insights' | 'Lead Finder' | 'Website AXY' | 'AXY Messaging Channels' | 'Creative Jobs'. Credit packs: 'Small Pack' | 'Medium Pack' | 'Large Pack'. Merch: exact product name as it appears in the catalog (e.g. 'White glossy mug', 'Cuffed Beanie', 'Unisex t-shirt').",
+        },
+      },
+      required: ["section", "id"],
+    },
+  },
   {
     name: "capture_lead",
     description:
@@ -216,6 +244,29 @@ export async function POST(req: NextRequest) {
           // Execute each tool call.
           const toolResults: Anthropic.ToolResultBlockParam[] = [];
           for (const tu of toolUses) {
+            if (tu.name === "show_preview") {
+              const section = String(tu.input.section ?? "").trim();
+              const id = String(tu.input.id ?? "").trim();
+              if (
+                ["tier", "addon", "credit_pack", "merch"].includes(section) &&
+                id
+              ) {
+                send("focus", { section, id });
+                toolResults.push({
+                  type: "tool_result",
+                  tool_use_id: tu.id,
+                  content: `Highlighted ${section}:${id} in preview panel.`,
+                });
+              } else {
+                toolResults.push({
+                  type: "tool_result",
+                  tool_use_id: tu.id,
+                  content: "Invalid section or id.",
+                  is_error: true,
+                });
+              }
+              continue;
+            }
             if (tu.name === "capture_lead") {
               const name = String(tu.input.name ?? "").trim() || undefined;
               const email = String(tu.input.email ?? "").trim();
