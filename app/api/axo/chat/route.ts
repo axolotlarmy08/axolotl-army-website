@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { offeringsForPrompt } from "@/lib/axo/offerings";
 import { saveAxoChatLead } from "@/lib/db";
-import { emailLeadNotification } from "@/lib/axo/email";
+import { emailLeadNotification, emailVisitorInfoPacket } from "@/lib/axo/email";
 
 export const maxDuration = 60;
 export const runtime = "nodejs";
@@ -92,10 +92,12 @@ Concrete rule: if your reply will contain ANY of these names, call show_preview 
 
 You can call show_preview multiple times per turn. For each new item you mention, call it again. If a question is open-ended ("what do you offer?"), pick the single best-fit item to spotlight before listing — don't leave the panel idle.
 
-LEAD CAPTURE:
-- Use the capture_lead tool when someone (a) wants to be notified about something, (b) wants a discount, (c) asks deep pricing/feature questions, or (d) explicitly offers their info.
-- Always confirm with the user before calling the tool. Quote back the email so typos are caught.
-- After capture, confirm warmly and continue the conversation — don't end it.
+LEAD CAPTURE (PROACTIVE — this is how we convert):
+- After roughly 3 engaged messages (visitor has asked at least 2-3 substantive questions and seems genuinely curious), proactively offer to email them a full breakdown — every tier, every add-on, every credit pack, plus signup links. Frame it as a real favor: "Want me to send you the full breakdown so you can compare in your own time? I'll email over every tier, what's included, and where to start — just need a name and email."
+- Also call capture_lead immediately if they: ask to be notified, ask about a discount or early access, ask deep pricing/feature questions, or explicitly offer their info.
+- Always confirm by quoting back the email before calling the tool — catches typos.
+- When capture_lead runs, the visitor automatically receives an info-packet email with all the details. Tell them: "I just sent everything to <email> — should land in a minute. Anything else you want to dig into?"
+- Do NOT push for email if the visitor seems lukewarm or has only asked one shallow question. Pushy = closed tab.
 
 PRECISION — NON-NEGOTIABLE:
 - The INCLUDED and NOT INCLUDED lists above are the ground truth. Mirror them word-for-word when describing what a tier has. Do not paraphrase a gated feature as if it's a full feature.
@@ -307,12 +309,15 @@ export async function POST(req: NextRequest) {
                   interest,
                   transcriptSnippet: snippet,
                 });
-                await emailLeadNotification({
-                  name,
-                  email,
-                  interest,
-                  transcriptSnippet: snippet,
-                });
+                await Promise.all([
+                  emailLeadNotification({
+                    name,
+                    email,
+                    interest,
+                    transcriptSnippet: snippet,
+                  }),
+                  emailVisitorInfoPacket({ name, email, interest }),
+                ]);
                 toolResults.push({
                   type: "tool_result",
                   tool_use_id: tu.id,
