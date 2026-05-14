@@ -12,6 +12,8 @@ export async function emailLeadNotification(lead: {
   email: string;
   interest?: string | null;
   transcriptSnippet?: string | null;
+  priority?: "normal" | "high";
+  business?: string | null;
 }): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   const to = process.env.LEAD_NOTIFICATION_EMAIL;
@@ -20,15 +22,31 @@ export async function emailLeadNotification(lead: {
     return;
   }
   const resend = new Resend(key);
-  const subject = `New AXO chat lead — ${lead.name ?? lead.email}`;
+  const isHigh = lead.priority === "high";
+  const subject = isHigh
+    ? `🔥 HIGH-VALUE AXO lead — ${lead.name ?? lead.email} — call within the hour`
+    : `New AXO chat lead — ${lead.name ?? lead.email}`;
+
+  const banner = isHigh
+    ? `<div style="background:#dc2626;color:#fff;padding:14px 16px;border-radius:8px;margin-bottom:16px;font-family:-apple-system,Helvetica,Arial,sans-serif;">
+        <div style="font-size:13px;letter-spacing:1px;opacity:.9;">🔥 PRIORITY LEAD</div>
+        <div style="font-size:16px;font-weight:600;margin-top:2px;">AXO detected enterprise / agency / high-budget signals. Reach out fast.</div>
+      </div>`
+    : "";
+
   const lines = [
+    banner,
     `<p><strong>Email:</strong> ${escapeHtml(lead.email)}</p>`,
     lead.name ? `<p><strong>Name:</strong> ${escapeHtml(lead.name)}</p>` : "",
+    lead.business
+      ? `<p><strong>Business / work:</strong> ${escapeHtml(lead.business)}</p>`
+      : "",
     lead.interest
       ? `<p><strong>Interest:</strong> ${escapeHtml(lead.interest)}</p>`
       : "",
+    `<p><strong>Priority:</strong> ${isHigh ? "🔥 HIGH" : "normal"}</p>`,
     lead.transcriptSnippet
-      ? `<p><strong>Conversation snippet:</strong></p><blockquote style="border-left:3px solid #ccc;padding-left:12px;color:#444;white-space:pre-wrap;">${escapeHtml(
+      ? `<p><strong>Conversation snippet:</strong></p><blockquote style="border-left:3px solid ${isHigh ? "#dc2626" : "#ccc"};padding-left:12px;color:#444;white-space:pre-wrap;">${escapeHtml(
           lead.transcriptSnippet
         )}</blockquote>`
       : "",
@@ -39,7 +57,7 @@ export async function emailLeadNotification(lead: {
       from: FROM,
       to,
       subject,
-      html: lines.join("\n"),
+      html: `<div style="font-family:-apple-system,Helvetica,Arial,sans-serif;max-width:600px;">${lines.join("\n")}</div>`,
     });
   } catch (err) {
     console.error("[axo lead email] send failed:", err);

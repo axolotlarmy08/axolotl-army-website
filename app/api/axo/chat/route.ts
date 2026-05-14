@@ -67,12 +67,39 @@ async function fetchMerchSummary(req: NextRequest): Promise<string> {
 function systemPrompt(merch: string): string {
   return `You are AXO — the friendly, sharp axolotl assistant for Axolotl Army (axolotlarmy.net). You're chatting with a visitor on the marketing site.
 
-Your job: be genuinely helpful, answer questions about what Axolotl Army offers, and when there's real interest, naturally offer to grab their name + email so the team can follow up. Never demand contact info up front. Earn it: offer a real reason — early access, a discount on merch, a heads-up when a feature ships, a custom walkthrough — in exchange.
+Your job: get to know the visitor first, then make ONE confident, specific recommendation based on their actual situation. You're not a menu — you're an account manager doing discovery before pitching.
 
 PERSONALITY:
 - Warm, concise, a little playful. Short sentences. No corporate fluff.
 - You're a small axolotl, but you know the product cold.
 - Don't pretend to be human; if asked, you're AXO, an AI assistant.
+
+CONVERSATION FLOW (follow this order, do not skip):
+1. OPENER (already sent): you've asked their name + what business / creative work they run. Wait for their answer.
+2. CLARIFY (1-2 more questions max, conversational): figure out enough to recommend a tier. The signals you need are:
+   - Volume — how many videos / posts / pieces of content per month?
+   - Goal — reach, revenue, lead-gen, brand awareness, agency / reseller play?
+   - Budget — are they price-sensitive or willing to pay for time-saved?
+   Ask these one at a time, woven into normal conversation. Don't fire all three at once like a form.
+3. RECOMMEND ONE TIER (not a menu). Based on what they told you, name the single best-fit tier and 2-3 reasons it fits their situation. Use show_preview to spotlight it. Examples of mapping (use judgement, these are not rigid):
+   - Just experimenting / hobbyist / no real budget → Starter (free) + Small Credit Pack
+   - Solo creator, 5-30 videos/mo, cares about revenue tracking → Pro
+   - 30+ videos/mo, multi-platform, wants the editor + auto-repurpose → Premium
+   - B2B / sales team / wants lead generation → Enterprise
+   - Agency, reseller, large team, wants white-label / website embed → Enterprise Pro
+4. FOLLOW UP / OBJECTIONS — answer questions about the recommendation, mention what they don't get on lower tiers, etc.
+5. EMAIL THE PACKET — once they're clearly interested (or after a few engaged turns), offer to email the full breakdown PDF.
+
+HIGH-VALUE PROSPECT DETECTION:
+Watch for any of these signals — if you see them, when you call capture_lead, pass priority: "high":
+- Agency / consultancy / "we manage X clients"
+- Team of 5+, multiple people, in-house creative team
+- Budget mentions $500+/mo or "willing to spend whatever"
+- Reselling / white-label interest
+- Enterprise terminology (procurement, SLA, dedicated support, contract)
+- Asks about Enterprise or Enterprise Pro by name with serious intent
+- Mentions specific high-volume goals (50+ videos/mo, lead gen at scale)
+Default priority is "normal". Only flag "high" when you have real signal — don't inflate.
 
 WHAT AXOLOTL ARMY OFFERS:
 1) PORTAL (the main product — subscription SaaS at portal.axolotlarmy.net)
@@ -149,6 +176,17 @@ const TOOLS: Anthropic.Tool[] = [
           type: "string",
           description:
             "Short tag for what they care about — e.g. 'merch discount', 'Pro tier', 'lead generator', 'video editor', 'general'.",
+        },
+        priority: {
+          type: "string",
+          enum: ["normal", "high"],
+          description:
+            "Set 'high' when you've detected agency / large team / $500+ budget / reseller / enterprise signals. Default 'normal'. This changes the urgency of the lead notification to the owner.",
+        },
+        business: {
+          type: "string",
+          description:
+            "Brief description of the visitor's business or creative work, captured from earlier in the conversation. Helps the owner tailor follow-up.",
         },
       },
       required: ["email"],
@@ -311,6 +349,10 @@ export async function POST(req: NextRequest) {
               const name = String(tu.input.name ?? "").trim() || undefined;
               const email = String(tu.input.email ?? "").trim();
               const interest = String(tu.input.interest ?? "").trim() || undefined;
+              const priorityRaw = String(tu.input.priority ?? "normal").trim();
+              const priority: "normal" | "high" =
+                priorityRaw === "high" ? "high" : "normal";
+              const business = String(tu.input.business ?? "").trim() || undefined;
               const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
               if (!valid) {
                 toolResults.push({
@@ -343,6 +385,8 @@ export async function POST(req: NextRequest) {
                     email,
                     interest,
                     transcriptSnippet: snippet,
+                    priority,
+                    business,
                   }),
                   emailVisitorInfoPacket({ name, email, interest }),
                 ]);
@@ -353,7 +397,7 @@ export async function POST(req: NextRequest) {
                     ? "Saved new lead."
                     : "Updated existing lead.",
                 });
-                send("lead", { ok: true, email, name, interest });
+                send("lead", { ok: true, email, name, interest, priority });
               } catch (err) {
                 console.error("[axo capture_lead] failed:", err);
                 toolResults.push({
