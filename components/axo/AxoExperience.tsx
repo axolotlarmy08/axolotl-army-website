@@ -53,7 +53,7 @@ export default function AxoExperience() {
     {
       role: "assistant",
       content:
-        "Hey — I'm AXO.\n\nBefore I show you anything, who am I chatting with? Just a first name's fine. And what kind of business or creative work are you running?",
+        "Hey — I'm AXO. What can I help you figure out?",
     },
   ]);
   const [input, setInput] = useState("");
