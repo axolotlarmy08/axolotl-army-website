@@ -21,10 +21,34 @@ type MerchProduct = {
   startingPrice: number;
 };
 
+const VISITOR_ID_KEY = "axo_visitor_id";
+
+function getOrCreateVisitorId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let id = window.localStorage.getItem(VISITOR_ID_KEY);
+    if (!id) {
+      id =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      window.localStorage.setItem(VISITOR_ID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
 export default function AxoExperience() {
   const [opened, setOpened] = useState(false);
   const [merch, setMerch] = useState<MerchProduct[] | null>(null);
   const merchSectionRef = useRef<HTMLElement>(null);
+  const visitorIdRef = useRef<string>("");
+
+  useEffect(() => {
+    visitorIdRef.current = getOrCreateVisitorId();
+  }, []);
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
@@ -104,7 +128,10 @@ export default function AxoExperience() {
       const res = await fetch("/api/axo/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({
+          messages: next,
+          visitorId: visitorIdRef.current || undefined,
+        }),
       });
       if (!res.ok || !res.body) {
         const errBody = await res.json().catch(() => ({}));

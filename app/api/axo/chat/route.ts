@@ -20,6 +20,20 @@ interface Msg {
 
 interface ChatBody {
   messages: Msg[];
+  /**
+   * Stable per-browser ID, generated client-side and stored in localStorage.
+   * When present, this is preferred over the IP hash as the memory key —
+   * survives network changes, VPN toggles, mobile carrier rotations.
+   */
+  visitorId?: string;
+}
+
+const VISITOR_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
+
+function normalizeVisitorId(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  return VISITOR_ID_RE.test(trimmed) ? trimmed : null;
 }
 
 // Simple per-IP rate limit so a single visitor can't run up the API bill.
@@ -283,10 +297,31 @@ export async function POST(req: NextRequest) {
 
   const anthropic = new Anthropic({ apiKey: key });
   const merch = await fetchMerchSummary(req);
-  const ipHash = hashIp(ip);
+
+  // Memory key — prefer the stable client-supplied visitor ID. Falls back to
+  // a salted IP hash so we still recognize visitors who block localStorage.
+  // Keys are namespaced so the two ID spaces can never collide.
+  const visitorId = normalizeVisitorId(body.visitorId);
+  const memoryKey = visitorId ? `v:${visitorId}` : `ip:${hashIp(ip)}`;
   let memory: AxoVisitorMemory | null = null;
   try {
-    memory = await getAxoVisitorMemory(ipHash);
+    memory = await getAxoVisitorMemory(memoryKey);
+    // Migration path — if a visitor previously used IP-only memory and is now
+    // sending a visitorId, carry that context onto the new key so we don't
+    // "forget" them. One-shot copy, only when the v: row is empty.
+    if (!memory && visitorId) {
+      const legacy = await getAxoVisitorMemory(`ip:${hashIp(ip)}`);
+      if (legacy) {
+        await upsertAxoVisitorMemory(memoryKey, {
+          name: legacy.name ?? null,
+          business: legacy.business ?? null,
+          interest: legacy.interest ?? null,
+          lastRecommendedTier: legacy.lastRecommendedTier ?? null,
+          capturedEmail: legacy.capturedEmail ?? null,
+        });
+        memory = legacy;
+      }
+    }
   } catch (err) {
     console.warn("[axo memory] read failed:", err);
   }
@@ -392,7 +427,7 @@ export async function POST(req: NextRequest) {
               const business = String(tu.input.business ?? "").trim() || null;
               const interest = String(tu.input.interest ?? "").trim() || null;
               if (name || business || interest) {
-                upsertAxoVisitorMemory(ipHash, {
+                upsertAxoVisitorMemory(memoryKey, {
                   name,
                   business,
                   interest,
@@ -418,7 +453,7 @@ export async function POST(req: NextRequest) {
                 // Persist the last tier we recommended so a returning visitor
                 // gets greeted with the right context.
                 if (section === "tier") {
-                  upsertAxoVisitorMemory(ipHash, {
+                  upsertAxoVisitorMemory(memoryKey, {
                     lastRecommendedTier: id,
                   }).catch((err) =>
                     console.warn("[axo memory] tier upsert failed:", err)
@@ -483,7 +518,7 @@ export async function POST(req: NextRequest) {
                     business,
                   }),
                   emailVisitorInfoPacket({ name, email, interest }),
-                  upsertAxoVisitorMemory(ipHash, {
+                  upsertAxoVisitorMemory(memoryKey, {
                     name: name ?? null,
                     business: business ?? null,
                     interest: interest ?? null,
