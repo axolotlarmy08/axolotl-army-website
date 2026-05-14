@@ -62,11 +62,24 @@ export default function AxoExperience() {
   const [focus, setFocus] = useState<{ section: string; id: string } | null>(
     null
   );
+  // Cards the visitor has manually clicked to expand. Independent of `focus`
+  // (which is driven by AXO's show_preview calls). Either source = expanded.
+  const [clicked, setClicked] = useState<Set<string>>(new Set());
+  const toggleClicked = (key: string) =>
+    setClicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  const isExpanded = (section: string, id: string) =>
+    (focus?.section === section && focus.id === id) ||
+    clicked.has(`${section}:${id}`);
   const scrollRef = useRef<HTMLDivElement>(null);
   const tierRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const addonRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const packRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const merchRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const merchRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -337,7 +350,8 @@ export default function AxoExperience() {
               </h3>
               <div className="space-y-2">
                 {AXO_TIERS.map((t) => {
-                  const active =
+                  const open = isExpanded("tier", t.name);
+                  const focused =
                     focus?.section === "tier" && focus.id === t.name;
                   return (
                     <div
@@ -345,25 +359,55 @@ export default function AxoExperience() {
                       ref={(el) => {
                         tierRefs.current[t.name] = el;
                       }}
-                      className={`rounded-xl border p-3 transition ${
-                        active
+                      onClick={() => toggleClicked(`tier:${t.name}`)}
+                      className={`rounded-xl border p-3 transition cursor-pointer hover:border-white/30 ${
+                        focused
                           ? "border-white bg-white/[0.08] ring-2 ring-white/30"
+                          : open
+                          ? "border-white/30 bg-white/[0.04]"
                           : "border-white/10 bg-white/[0.02]"
                       }`}
                     >
                       <div className="flex items-baseline justify-between gap-3">
                         <div className="font-medium text-white">{t.name}</div>
                         <div className="text-white/70 text-sm whitespace-nowrap">
-                          {t.monthlyPrice === 0 ? "Free" : `$${t.monthlyPrice}/mo`}
+                          {t.monthlyPrice === 0
+                            ? "Free"
+                            : `$${t.monthlyPrice}/mo`}
+                          {t.creditsUsd ? (
+                            <span className="text-white/40">
+                              {" "}
+                              · ${t.creditsUsd}/mo credits
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                       <div className="text-sm text-white/50 mt-1">{t.tagline}</div>
-                      {active && (
-                        <ul className="mt-2 text-sm text-white/70 list-disc list-inside space-y-0.5">
-                          {t.highlights.slice(0, 6).map((h) => (
-                            <li key={h}>{h}</li>
-                          ))}
-                        </ul>
+                      {open && (
+                        <div className="mt-3 space-y-2">
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wider text-white/40 mb-1">
+                              Included
+                            </div>
+                            <ul className="text-sm text-white/80 list-disc list-inside space-y-0.5">
+                              {t.highlights.map((h) => (
+                                <li key={h}>{h}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          {t.notIncluded?.length ? (
+                            <div>
+                              <div className="text-[10px] uppercase tracking-wider text-white/40 mb-1">
+                                Not included
+                              </div>
+                              <ul className="text-sm text-white/50 list-disc list-inside space-y-0.5">
+                                {t.notIncluded.map((n) => (
+                                  <li key={n}>{n}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                        </div>
                       )}
                     </div>
                   );
@@ -377,7 +421,8 @@ export default function AxoExperience() {
               </h3>
               <div className="grid grid-cols-1 gap-2">
                 {AXO_ADDONS.map((a) => {
-                  const active =
+                  const open = isExpanded("addon", a.name);
+                  const focused =
                     focus?.section === "addon" && focus.id === a.name;
                   return (
                     <div
@@ -385,21 +430,46 @@ export default function AxoExperience() {
                       ref={(el) => {
                         addonRefs.current[a.name] = el;
                       }}
-                      className={`rounded-lg border p-3 flex justify-between gap-3 transition ${
-                        active
+                      onClick={() => toggleClicked(`addon:${a.name}`)}
+                      className={`rounded-lg border p-3 transition cursor-pointer hover:border-white/30 ${
+                        focused
                           ? "border-white bg-white/[0.08] ring-2 ring-white/30"
+                          : open
+                          ? "border-white/30 bg-white/[0.04]"
                           : "border-white/10 bg-white/[0.02]"
                       }`}
                     >
-                      <div>
-                        <div className="text-sm text-white">{a.name}</div>
-                        <div className="text-xs text-white/50 mt-0.5">
-                          {a.blurb}
+                      <div className="flex justify-between gap-3">
+                        <div>
+                          <div className="text-sm text-white">{a.name}</div>
+                          <div className="text-xs text-white/50 mt-0.5">
+                            {a.blurb}
+                          </div>
+                        </div>
+                        <div className="text-sm text-white/70 whitespace-nowrap">
+                          ${a.monthlyPrice}/mo
                         </div>
                       </div>
-                      <div className="text-sm text-white/70 whitespace-nowrap">
-                        ${a.monthlyPrice}/mo
-                      </div>
+                      {open && (
+                        <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+                          {a.includedInTier && (
+                            <div className="text-xs text-white/70">
+                              Already bundled in{" "}
+                              <span className="text-white">
+                                {a.includedInTier}+
+                              </span>{" "}
+                              — no need to add separately on that tier or higher.
+                            </div>
+                          )}
+                          {a.details?.length ? (
+                            <ul className="text-xs text-white/70 list-disc list-inside space-y-0.5">
+                              {a.details.map((d) => (
+                                <li key={d}>{d}</li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -417,41 +487,63 @@ export default function AxoExperience() {
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   {merch.map((p) => {
-                    const active =
+                    const open = isExpanded("merch", p.name);
+                    const focused =
                       focus?.section === "merch" && focus.id === p.name;
                     return (
-                      <a
+                      <div
                         key={p.syncProductId}
-                        href="/merch"
                         ref={(el) => {
                           merchRefs.current[p.name] = el;
                         }}
-                        className={`group rounded-lg border overflow-hidden transition ${
-                          active
+                        onClick={() => toggleClicked(`merch:${p.name}`)}
+                        className={`group rounded-lg border overflow-hidden transition cursor-pointer ${
+                          focused
                             ? "border-white bg-white/[0.06] ring-2 ring-white/30 scale-[1.02]"
+                            : open
+                            ? "border-white/30 bg-white/[0.04]"
                             : "border-white/10 bg-white/[0.02] hover:border-white/30"
-                        }`}
+                        } ${open ? "col-span-2" : ""}`}
                       >
-                      <div className="relative aspect-square bg-white/5">
-                        {p.thumbnail && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={p.thumbnail}
-                            alt={p.name}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition"
-                            loading="lazy"
-                          />
-                        )}
-                      </div>
-                      <div className="p-2">
-                        <div className="text-xs text-white/90 line-clamp-2">
-                          {p.name}
+                        <div
+                          className={`relative bg-white/5 ${
+                            open ? "aspect-video" : "aspect-square"
+                          }`}
+                        >
+                          {p.thumbnail && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={p.thumbnail}
+                              alt={p.name}
+                              className="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition"
+                              loading="lazy"
+                            />
+                          )}
                         </div>
-                        <div className="text-xs text-white/50 mt-0.5">
-                          from ${p.startingPrice}
+                        <div className="p-2">
+                          <div className="text-xs text-white/90 line-clamp-2">
+                            {p.name}
+                          </div>
+                          <div className="text-xs text-white/50 mt-0.5">
+                            from ${p.startingPrice}
+                          </div>
+                          {open && (
+                            <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+                              <div className="text-xs text-white/60">
+                                Click the button to check out on{" "}
+                                <span className="text-white/80">/merch</span>.
+                              </div>
+                              <a
+                                href={`/merch/${p.syncProductId}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-xs text-black bg-white rounded px-2 py-1 hover:bg-white/90 whitespace-nowrap"
+                              >
+                                View &amp; buy
+                              </a>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </a>
                     );
                   })}
                 </div>
@@ -464,7 +556,8 @@ export default function AxoExperience() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {AXO_CREDIT_PACKS.map((p) => {
-                  const active =
+                  const open = isExpanded("credit_pack", p.name);
+                  const focused =
                     focus?.section === "credit_pack" && focus.id === p.name;
                   return (
                     <div
@@ -472,9 +565,12 @@ export default function AxoExperience() {
                       ref={(el) => {
                         packRefs.current[p.name] = el;
                       }}
-                      className={`rounded-lg border p-3 transition ${
-                        active
+                      onClick={() => toggleClicked(`credit_pack:${p.name}`)}
+                      className={`rounded-lg border p-3 transition cursor-pointer hover:border-white/30 ${
+                        focused
                           ? "border-white bg-white/[0.08] ring-2 ring-white/30"
+                          : open
+                          ? "border-white/30 bg-white/[0.04]"
                           : "border-white/10 bg-white/[0.02]"
                       }`}
                     >
@@ -482,6 +578,13 @@ export default function AxoExperience() {
                       <div className="text-xs text-white/50 mt-0.5">
                         {p.credits.toLocaleString()} credits · ${p.price}
                       </div>
+                      {open && p.details?.length ? (
+                        <ul className="mt-3 pt-3 border-t border-white/10 text-xs text-white/70 list-disc list-inside space-y-0.5">
+                          {p.details.map((d) => (
+                            <li key={d}>{d}</li>
+                          ))}
+                        </ul>
+                      ) : null}
                     </div>
                   );
                 })}

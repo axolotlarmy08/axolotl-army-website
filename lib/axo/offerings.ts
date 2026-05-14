@@ -9,6 +9,10 @@ export interface AxoAddon {
   name: string;
   monthlyPrice: number;
   blurb: string;
+  /** Tier name where this is already bundled at no extra cost. */
+  includedInTier?: string;
+  /** Bullet details shown when the card is expanded. */
+  details?: string[];
 }
 
 export interface AxoCreditPack {
@@ -16,6 +20,8 @@ export interface AxoCreditPack {
   price: number;
   credits: number;
   blurb: string;
+  /** Bullet details shown when the card is expanded. */
+  details?: string[];
 }
 
 export interface AxoTier {
@@ -148,47 +154,103 @@ export const AXO_ADDONS: AxoAddon[] = [
     monthlyPrice: 29,
     blurb:
       "Auto-post videos to YouTube, TikTok, Instagram, Facebook, X. Included in Pro+.",
+    includedInTier: "Pro",
+    details: [
+      "Schedule posts ahead of time per platform",
+      "Auto-format aspect ratios per channel",
+      "Per-platform captions, hashtags, and titles",
+      "One-click cross-post from any generation",
+    ],
   },
   {
     name: "Video Editor",
     monthlyPrice: 49,
     blurb:
       "Pro-grade timeline, overlays, captions, exports. Included in Premium+.",
+    includedInTier: "Premium",
+    details: [
+      "Multi-track timeline (video, audio, text, overlays)",
+      "Captions auto-generated and styled",
+      "Trim, split, ripple-delete, transitions",
+      "Export 4K · vertical / square / wide",
+    ],
   },
   {
     name: "Auto-Repurpose",
     monthlyPrice: 39,
     blurb:
       "One video → up to 12 platform-tailored clips with per-platform captions. Included in Premium+.",
+    includedInTier: "Premium",
+    details: [
+      "AI finds the strongest hook moments in your master video",
+      "Cuts and reframes for TikTok, Reels, Shorts, X, LinkedIn, YouTube long",
+      "Per-platform captions written for each clip's audience",
+      "Optional auto-schedule across all your channels",
+    ],
   },
   {
     name: "Performance Insights",
     monthlyPrice: 19,
     blurb:
       "Closed-loop AI that feeds winning patterns back into new generations. Included in Premium+.",
+    includedInTier: "Premium",
+    details: [
+      "Views, retention, and revenue per video across platforms",
+      "Detects winning hooks, lengths, pacing patterns",
+      "Surfaces under-performers with reasons + fix suggestions",
+      "Feeds the patterns into your next generation prompts automatically",
+    ],
   },
   {
     name: "Lead Finder",
     monthlyPrice: 49,
     blurb:
       "10 quality decision-maker leads/week via Google Places + AI. Includes Gmail/Outlook OAuth.",
+    details: [
+      "Pull businesses in your niche from Google Places",
+      "AI + web search identifies the real decision-maker (not info@)",
+      "Personal email enrichment per lead",
+      "Gmail / Outlook OAuth for sending from your own inbox",
+      "Outreach templates + scheduled sequences land in Phase 2",
+    ],
   },
   {
     name: "Website AXY",
     monthlyPrice: 497,
     blurb:
       "Embed AXY on your own site with lead capture, follow-up records, owner dashboard.",
+    includedInTier: "Enterprise Pro",
+    details: [
+      "Drop-in script tag — branded chat on your domain",
+      "Built-in lead capture + email follow-up records",
+      "Usage bars and owner dashboard tracking",
+      "Same AXY brain, your colors and voice",
+    ],
   },
   {
     name: "AXY Messaging Channels",
     monthlyPrice: 99,
     blurb: "Connect AXY to Telegram and WhatsApp for outside-portal access.",
+    includedInTier: "Enterprise Pro",
+    details: [
+      "Telegram bot integration",
+      "WhatsApp Business integration",
+      "Provider usage tracked separately from base AXY",
+      "Same conversation context across all channels",
+    ],
   },
   {
     name: "Creative Jobs",
     monthlyPrice: 199,
     blurb:
       "Ad images, thumbnails, carousels, slideshows, reels, revisions — from one intake.",
+    includedInTier: "Enterprise Pro",
+    details: [
+      "One creative intake → ad image sets, thumbnails, carousels, slideshows, reels, longer videos",
+      "Revision requests handled inside the same job",
+      "Brand-aware: pulls your saved brand profile + recent assets",
+      "Delivery in 24-48h on standard jobs",
+    ],
   },
 ];
 
@@ -198,18 +260,39 @@ export const AXO_CREDIT_PACKS: AxoCreditPack[] = [
     price: 10,
     credits: 1000,
     blurb: "≈ 1 Runway 30s video, or 5 VEO3 8s videos, or 50 thumbnails.",
+    details: [
+      "$0.010 per credit (base rate)",
+      "≈ 1 Runway Gen-4 30s video",
+      "≈ 5 VEO3 8s videos",
+      "≈ 50 thumbnail generations",
+      "No expiration on unused credits",
+    ],
   },
   {
     name: "Medium Pack",
     price: 45,
     credits: 5000,
     blurb: "≈ 2 Seedance 34s videos + leftover. 10% off base rate.",
+    details: [
+      "$0.009 per credit (10% off base rate)",
+      "≈ 2 Seedance 34s character videos with credits to spare",
+      "≈ 25 VEO3 8s videos",
+      "≈ 250 thumbnails",
+      "Save $5 vs buying five Small Packs",
+    ],
   },
   {
     name: "Large Pack",
     price: 170,
     credits: 20000,
     blurb: "≈ 11 Seedance 34s videos. 15% off base rate.",
+    details: [
+      "$0.0085 per credit (15% off base rate — biggest discount)",
+      "≈ 11 Seedance 34s character videos",
+      "≈ 100 VEO3 8s videos",
+      "≈ 1,000 thumbnails",
+      "Save $30 vs buying twenty Small Packs",
+    ],
   },
 ];
 
