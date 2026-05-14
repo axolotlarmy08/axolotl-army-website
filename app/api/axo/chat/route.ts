@@ -1,8 +1,14 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { offeringsForPrompt } from "@/lib/axo/offerings";
-import { saveAxoChatLead } from "@/lib/db";
+import {
+  saveAxoChatLead,
+  getAxoVisitorMemory,
+  upsertAxoVisitorMemory,
+  type AxoVisitorMemory,
+} from "@/lib/db";
 import { emailLeadNotification, emailVisitorInfoPacket } from "@/lib/axo/email";
+import { hashIp } from "@/lib/axo/ipHash";
 
 export const maxDuration = 60;
 export const runtime = "nodejs";
@@ -64,8 +70,26 @@ async function fetchMerchSummary(req: NextRequest): Promise<string> {
   }
 }
 
-function systemPrompt(merch: string): string {
-  return `You are AXO — the friendly, sharp axolotl assistant for Axolotl Army (axolotlarmy.net). You're chatting with a visitor on the marketing site.
+function returnerBlock(memory: AxoVisitorMemory | null): string {
+  if (!memory) return "";
+  const parts: string[] = [];
+  if (memory.name) parts.push(`name: ${memory.name}`);
+  if (memory.business) parts.push(`business: ${memory.business}`);
+  if (memory.interest) parts.push(`previous interest: ${memory.interest}`);
+  if (memory.lastRecommendedTier)
+    parts.push(`previously recommended tier: ${memory.lastRecommendedTier}`);
+  if (memory.capturedEmail)
+    parts.push(`already gave us their email: ${memory.capturedEmail}`);
+  if (!parts.length) return "";
+  return `\n\nRETURNING VISITOR (you have memory of them from a prior chat — do NOT re-do discovery):
+- ${parts.join("\n- ")}
+- conversations to date: ${memory.conversationCount}
+
+Greet them by name like an old friend ("Hey ${memory.name ?? "again"}, welcome back."). Acknowledge the context — e.g. "last time we were talking about ${memory.lastRecommendedTier ?? "your work"}, anything new since then?" — and skip straight to whatever question they ask. Do NOT re-ask their name, business, or budget. If they've already given an email, don't ask for it again; just send any new info to that address when they ask.`;
+}
+
+function systemPrompt(merch: string, memory: AxoVisitorMemory | null): string {
+  return `You are AXO — the friendly, sharp axolotl assistant for Axolotl Army (axolotlarmy.net). You're chatting with a visitor on the marketing site.${returnerBlock(memory)}
 
 Your job: get to know the visitor first, then make ONE confident, specific recommendation based on their actual situation. You're not a menu — you're an account manager doing discovery before pitching.
 
@@ -73,10 +97,12 @@ PERSONALITY:
 - Warm, concise, a little playful. Short sentences. No corporate fluff.
 - You're a small axolotl, but you know the product cold.
 - Don't pretend to be human; if asked, you're AXO, an AI assistant.
+- NEVER use emojis. Plain text only. No 🦎, no 🔥, no checkmarks, no sparkles. This is a strict rule.
 
 CONVERSATION FLOW (follow this order, do not skip):
 1. OPENER (already sent): you've asked their name + what business / creative work they run. Wait for their answer.
 2. CLARIFY (ONE follow-up question max, then move on): figure out enough to recommend a tier. The signals you want are volume + goal + budget. The visitor may volunteer two of these in their first reply — if so, ask ONE follow-up for whatever's missing and that's it. Do NOT ask a third question. Two user turns of discovery is the absolute ceiling — by your reply to their second message you MUST recommend a specific tier.
+   AS SOON AS you learn the visitor's name OR a description of their business (typically in their first reply), call the \`remember_visitor\` tool with what you've learned. This persists context so if they come back later you can greet them by name and skip discovery. Call it again later if you learn more.
 3. RECOMMEND ONE TIER (not a menu). Based on what they told you, name the single best-fit tier and 2-3 reasons it fits their situation. Use show_preview to spotlight it. Examples of mapping (use judgement, these are not rigid):
    - Just experimenting / hobbyist / no real budget → Starter (free) + Small Credit Pack
    - Solo creator, 5-30 videos/mo, cares about revenue tracking → Pro
@@ -160,6 +186,30 @@ const TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: "remember_visitor",
+    description:
+      "Persist what you've learned about the visitor (name and/or what they do) so the next time they come back, you can greet them by name and pick up where you left off. Call this as soon as you have either their first name OR a description of their business / creative work — typically within the first 1-2 turns. Safe to call multiple times; later calls patch the record. No UI side-effect; this is pure memory.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "Visitor's first name (or full name if they gave it).",
+        },
+        business: {
+          type: "string",
+          description:
+            "Brief description of what they do — e.g. 'YouTube channel about cars', 'creative agency, 25 clients', 'B2B SaaS founder'.",
+        },
+        interest: {
+          type: "string",
+          description:
+            "Short tag for what they care about right now — e.g. 'audience growth', 'lead gen', 'merch'.",
+        },
+      },
+    },
+  },
+  {
     name: "capture_lead",
     description:
       "Save the visitor's name and email so the team can follow up. CALL IMMEDIATELY when the user provides both a name (or you've already learned it earlier in the conversation) and a valid-looking email in the same turn — do NOT ask a follow-up confirmation question first, just fire the tool and echo the email back in your reply. Only ask for confirmation if the email looks malformed or ambiguous (typos, missing @, etc.).",
@@ -223,6 +273,13 @@ export async function POST(req: NextRequest) {
 
   const anthropic = new Anthropic({ apiKey: key });
   const merch = await fetchMerchSummary(req);
+  const ipHash = hashIp(ip);
+  let memory: AxoVisitorMemory | null = null;
+  try {
+    memory = await getAxoVisitorMemory(ipHash);
+  } catch (err) {
+    console.warn("[axo memory] read failed:", err);
+  }
 
   // Count substantive user turns and detect if a lead was already captured
   // earlier in this conversation. We use these to deterministically inject
@@ -273,7 +330,7 @@ export async function POST(req: NextRequest) {
           const resp = await anthropic.messages.stream({
             model: "claude-haiku-4-5-20251001",
             max_tokens: 700,
-            system: systemPrompt(merch),
+            system: systemPrompt(merch, memory),
             tools: TOOLS,
             messages,
           });
@@ -318,6 +375,26 @@ export async function POST(req: NextRequest) {
           // Execute each tool call.
           const toolResults: Anthropic.ToolResultBlockParam[] = [];
           for (const tu of toolUses) {
+            if (tu.name === "remember_visitor") {
+              const name = String(tu.input.name ?? "").trim() || null;
+              const business = String(tu.input.business ?? "").trim() || null;
+              const interest = String(tu.input.interest ?? "").trim() || null;
+              if (name || business || interest) {
+                upsertAxoVisitorMemory(ipHash, {
+                  name,
+                  business,
+                  interest,
+                }).catch((err) =>
+                  console.warn("[axo memory] remember upsert failed:", err)
+                );
+              }
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: tu.id,
+                content: "Visitor context saved.",
+              });
+              continue;
+            }
             if (tu.name === "show_preview") {
               const section = String(tu.input.section ?? "").trim();
               const id = String(tu.input.id ?? "").trim();
@@ -326,6 +403,15 @@ export async function POST(req: NextRequest) {
                 id
               ) {
                 send("focus", { section, id });
+                // Persist the last tier we recommended so a returning visitor
+                // gets greeted with the right context.
+                if (section === "tier") {
+                  upsertAxoVisitorMemory(ipHash, {
+                    lastRecommendedTier: id,
+                  }).catch((err) =>
+                    console.warn("[axo memory] tier upsert failed:", err)
+                  );
+                }
                 toolResults.push({
                   type: "tool_result",
                   tool_use_id: tu.id,
@@ -385,6 +471,14 @@ export async function POST(req: NextRequest) {
                     business,
                   }),
                   emailVisitorInfoPacket({ name, email, interest }),
+                  upsertAxoVisitorMemory(ipHash, {
+                    name: name ?? null,
+                    business: business ?? null,
+                    interest: interest ?? null,
+                    capturedEmail: email,
+                  }).catch((err) => {
+                    console.warn("[axo memory] lead upsert failed:", err);
+                  }),
                 ]);
                 toolResults.push({
                   type: "tool_result",

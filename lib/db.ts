@@ -78,6 +78,23 @@ async function ensureSchema() {
     )
   `;
 
+  // Returning-visitor memory for AXO chat. Keyed by a salted SHA-256 hash
+  // of the visitor's IP so we never store the raw address. Lets AXO greet
+  // a returner by name and skip discovery if it already knows their work.
+  await sql`
+    CREATE TABLE IF NOT EXISTS axo_chat_visitors (
+      ip_hash TEXT PRIMARY KEY,
+      name TEXT,
+      business TEXT,
+      interest TEXT,
+      last_recommended_tier TEXT,
+      captured_email TEXT,
+      conversation_count INT DEFAULT 1,
+      first_seen TIMESTAMPTZ DEFAULT NOW(),
+      last_seen TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+
   // Leads captured by the AXO website chat agent. Email is unique so a
   // returning visitor updates the same row instead of duplicating.
   await sql`
@@ -123,6 +140,90 @@ export async function saveAxoChatLead(input: {
     RETURNING (xmax = 0) AS inserted
   `) as Array<{ inserted: boolean }>;
   return { inserted: rows[0]?.inserted ?? false };
+}
+
+/* ─── AXO chat visitor memory ─── */
+
+export interface AxoVisitorMemory {
+  name?: string | null;
+  business?: string | null;
+  interest?: string | null;
+  lastRecommendedTier?: string | null;
+  capturedEmail?: string | null;
+  conversationCount: number;
+  firstSeen: Date;
+  lastSeen: Date;
+}
+
+export async function getAxoVisitorMemory(
+  ipHash: string
+): Promise<AxoVisitorMemory | null> {
+  await ensureSchema();
+  const sql = getSql();
+  const rows = (await sql`
+    SELECT name, business, interest, last_recommended_tier, captured_email,
+           conversation_count, first_seen, last_seen
+    FROM axo_chat_visitors
+    WHERE ip_hash = ${ipHash}
+  `) as Array<{
+    name: string | null;
+    business: string | null;
+    interest: string | null;
+    last_recommended_tier: string | null;
+    captured_email: string | null;
+    conversation_count: number;
+    first_seen: Date;
+    last_seen: Date;
+  }>;
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    name: r.name,
+    business: r.business,
+    interest: r.interest,
+    lastRecommendedTier: r.last_recommended_tier,
+    capturedEmail: r.captured_email,
+    conversationCount: r.conversation_count,
+    firstSeen: r.first_seen,
+    lastSeen: r.last_seen,
+  };
+}
+
+export async function upsertAxoVisitorMemory(
+  ipHash: string,
+  patch: {
+    name?: string | null;
+    business?: string | null;
+    interest?: string | null;
+    lastRecommendedTier?: string | null;
+    capturedEmail?: string | null;
+  }
+): Promise<void> {
+  await ensureSchema();
+  const sql = getSql();
+  await sql`
+    INSERT INTO axo_chat_visitors (
+      ip_hash, name, business, interest, last_recommended_tier, captured_email,
+      conversation_count, last_seen
+    ) VALUES (
+      ${ipHash},
+      ${patch.name ?? null},
+      ${patch.business ?? null},
+      ${patch.interest ?? null},
+      ${patch.lastRecommendedTier ?? null},
+      ${patch.capturedEmail ?? null},
+      1,
+      NOW()
+    )
+    ON CONFLICT (ip_hash) DO UPDATE SET
+      name = COALESCE(EXCLUDED.name, axo_chat_visitors.name),
+      business = COALESCE(EXCLUDED.business, axo_chat_visitors.business),
+      interest = COALESCE(EXCLUDED.interest, axo_chat_visitors.interest),
+      last_recommended_tier = COALESCE(EXCLUDED.last_recommended_tier, axo_chat_visitors.last_recommended_tier),
+      captured_email = COALESCE(EXCLUDED.captured_email, axo_chat_visitors.captured_email),
+      conversation_count = axo_chat_visitors.conversation_count + 1,
+      last_seen = NOW()
+  `;
 }
 
 /* ─── Printful mockup cache ─── */
