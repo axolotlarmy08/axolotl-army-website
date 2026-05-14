@@ -240,6 +240,16 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
+// Belt-and-suspenders emoji strip — the system prompt forbids emojis but
+// Haiku occasionally slips one in. Wipe them from the stream before the
+// client ever sees them.
+const EMOJI_RE =
+  /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{1F1E6}-\u{1F1FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F1FF}\u{1F200}-\u{1F2FF}]/gu;
+
+function stripEmoji(s: string): string {
+  return s.replace(EMOJI_RE, "");
+}
+
 function ipFrom(req: NextRequest): string {
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0]!.trim();
@@ -347,8 +357,10 @@ export async function POST(req: NextRequest) {
               chunk.type === "content_block_delta" &&
               chunk.delta.type === "text_delta"
             ) {
-              assistantText += chunk.delta.text;
-              send("text", { delta: chunk.delta.text });
+              const clean = stripEmoji(chunk.delta.text);
+              if (!clean) continue;
+              assistantText += clean;
+              send("text", { delta: clean });
             }
           }
 
