@@ -151,8 +151,10 @@ You MUST call the \`show_preview\` tool BEFORE you write any text that names a s
 
 Concrete rule: if your reply will contain ANY of these names, call show_preview first with that name as the 'id':
 - Tier names: Starter, Pro, Premium, Enterprise, Enterprise Pro
-- Add-on names: Social Posting, Video Editor, Auto-Repurpose, Performance Insights, Lead Finder, Website AXY, AXY Messaging Channels, Creative Jobs
+- Add-on names: AXY Assistant Add-on, Social Posting, Video Editor, Auto-Repurpose, Performance Insights, Lead Finder, Website AXY, AXY Messaging Channels, Creative Jobs
 - Credit pack names: Small Pack, Medium Pack, Large Pack
+- Lead Marketplace pack names: 10 leads, 25 leads, 50 leads, 100 leads (section: lead_pack)
+- AXY Voice top-up names: Small, Growth, Heavy (section: voice_topup)
 - Any merch product name from the catalog above (e.g. 'White glossy mug', 'Cuffed Beanie', 'Unisex t-shirt')
 
 You can call show_preview multiple times per turn. For each new item you mention, call it again. If a question is open-ended ("what do you offer?"), pick the single best-fit item to spotlight before listing — don't leave the panel idle.
@@ -189,13 +191,13 @@ const TOOLS: Anthropic.Tool[] = [
       properties: {
         section: {
           type: "string",
-          enum: ["tier", "addon", "credit_pack", "merch"],
+          enum: ["tier", "addon", "credit_pack", "lead_pack", "voice_topup", "merch"],
           description: "Which section the item lives in.",
         },
         id: {
           type: "string",
           description:
-            "The item's exact name. Tiers: 'Starter' | 'Pro' | 'Premium' | 'Enterprise' | 'Enterprise Pro'. Add-ons: 'Social Posting' | 'Video Editor' | 'Auto-Repurpose' | 'Performance Insights' | 'Lead Finder' | 'Website AXY' | 'AXY Messaging Channels' | 'Creative Jobs'. Credit packs: 'Small Pack' | 'Medium Pack' | 'Large Pack'. Merch: exact product name as it appears in the catalog (e.g. 'White glossy mug', 'Cuffed Beanie', 'Unisex t-shirt').",
+            "The item's exact name. Tiers: 'Starter' | 'Pro' | 'Premium' | 'Enterprise' | 'Enterprise Pro'. Add-ons: 'AXY Assistant Add-on' | 'Social Posting' | 'Video Editor' | 'Auto-Repurpose' | 'Performance Insights' | 'Lead Finder' | 'Website AXY' | 'AXY Messaging Channels' | 'Creative Jobs'. Credit packs: 'Small Pack' | 'Medium Pack' | 'Large Pack'. Lead packs: '10 leads' | '25 leads' | '50 leads' | '100 leads'. Voice top-ups: 'Small' | 'Growth' | 'Heavy'. Merch: exact product name from the catalog (e.g. 'White glossy mug').",
         },
       },
       required: ["section", "id"],
@@ -448,7 +450,7 @@ export async function POST(req: NextRequest) {
               const section = String(tu.input.section ?? "").trim();
               const id = String(tu.input.id ?? "").trim();
               if (
-                ["tier", "addon", "credit_pack", "merch"].includes(section) &&
+                ["tier", "addon", "credit_pack", "lead_pack", "voice_topup", "merch"].includes(section) &&
                 id
               ) {
                 send("focus", { section, id });

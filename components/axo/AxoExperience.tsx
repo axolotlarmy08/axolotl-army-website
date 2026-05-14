@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { PaperPlaneTilt, Sparkle, X, CheckCircle } from "@phosphor-icons/react";
-import { AXO_TIERS, AXO_ADDONS, AXO_CREDIT_PACKS } from "@/lib/axo/offerings";
+import {
+  AXO_TIERS,
+  AXO_ADDONS,
+  AXO_CREDIT_PACKS,
+  AXO_LEAD_PACKS,
+  AXO_VOICE_TOPUPS,
+} from "@/lib/axo/offerings";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -585,6 +591,109 @@ export default function AxoExperience() {
                           ))}
                         </ul>
                       ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="mb-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-3">
+                Lead marketplace
+              </h3>
+              <div className="text-xs text-white/50 mb-2">
+                One-time lead packs. Any tier, no monthly commitment.
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {AXO_LEAD_PACKS.map((p) => {
+                  const open = isExpanded("lead_pack", p.name);
+                  const focused =
+                    focus?.section === "lead_pack" && focus.id === p.name;
+                  return (
+                    <div
+                      key={p.name}
+                      onClick={() => toggleClicked(`lead_pack:${p.name}`)}
+                      className={`rounded-lg border p-3 transition cursor-pointer hover:border-white/30 ${
+                        focused
+                          ? "border-white bg-white/[0.08] ring-2 ring-white/30"
+                          : open
+                          ? "border-white/30 bg-white/[0.04]"
+                          : "border-white/10 bg-white/[0.02]"
+                      }`}
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <div className="text-sm text-white">{p.name}</div>
+                        <div className="text-sm text-white/70 whitespace-nowrap">
+                          ${p.price}
+                        </div>
+                      </div>
+                      <div className="text-xs text-white/50 mt-0.5">
+                        ${p.perLead.toFixed(2)}/lead
+                      </div>
+                      {open && (
+                        <ul className="mt-3 pt-3 border-t border-white/10 text-xs text-white/70 list-disc list-inside space-y-0.5">
+                          <li>{p.blurb}</li>
+                          <li>AI-curated real businesses in your niche, verified personal emails</li>
+                          <li>Filter by niche + location + quality grade (Warm / Lukewarm / Cold)</li>
+                          <li>System picks the highest-scoring leads matching your filter</li>
+                          <li>Leads transfer to your pipeline immediately on payment</li>
+                          <li>Buy via /portal/leads/marketplace OR via AXY chat (&quot;buy me 25 dentist leads in Edmonton&quot;)</li>
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="mb-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-3">
+                AXY Voice top-ups
+              </h3>
+              <div className="text-xs text-white/50 mb-2">
+                Extra characters for AXY Voice on Premium+ (or AXY Assistant Add-on). Top-ups roll over for 90 days.
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {AXO_VOICE_TOPUPS.map((v) => {
+                  const open = isExpanded("voice_topup", v.name);
+                  const focused =
+                    focus?.section === "voice_topup" && focus.id === v.name;
+                  return (
+                    <div
+                      key={v.name}
+                      onClick={() => toggleClicked(`voice_topup:${v.name}`)}
+                      className={`rounded-lg border p-3 transition cursor-pointer hover:border-white/30 ${
+                        focused
+                          ? "border-white bg-white/[0.08] ring-2 ring-white/30"
+                          : open
+                          ? "border-white/30 bg-white/[0.04]"
+                          : "border-white/10 bg-white/[0.02]"
+                      }`}
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <div className="text-sm text-white">{v.name}</div>
+                        <div className="text-sm text-white/70 whitespace-nowrap">
+                          ${v.price}
+                        </div>
+                      </div>
+                      <div className="text-xs text-white/50 mt-0.5">
+                        {v.characters.toLocaleString()} chars · ~
+                        {v.approxReplies} replies
+                      </div>
+                      {open && (
+                        <ul className="mt-3 pt-3 border-t border-white/10 text-xs text-white/70 list-disc list-inside space-y-0.5">
+                          <li>
+                            {v.characters.toLocaleString()} voice characters
+                          </li>
+                          <li>
+                            ~{v.approxReplies} extra AXY Voice replies
+                          </li>
+                          <li>Top-ups roll over for 90 days</li>
+                          <li>
+                            Requires Premium+ or the $49/mo AXY Assistant Add-on
+                          </li>
+                        </ul>
+                      )}
                     </div>
                   );
                 })}
