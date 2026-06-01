@@ -16,7 +16,9 @@ export const metadata = {
 export default function AxoEmbedPage() {
   return (
     <main className="min-h-screen bg-[#050505] px-3 py-4 sm:px-4 sm:py-6">
-      <AxoExperience />
+      {/* autoOpen: open straight into the live chat (no "Try AXO" intro card)
+          since this is framed into the Portal landing page. */}
+      <AxoExperience autoOpen />
     </main>
   );
 }
