@@ -46,8 +46,12 @@ function getOrCreateVisitorId(): string {
   }
 }
 
-export default function AxoExperience() {
-  const [opened, setOpened] = useState(false);
+export default function AxoExperience({ autoOpen = false }: { autoOpen?: boolean }) {
+  // autoOpen: skip the "Try AXO" intro card and show the live chat immediately.
+  // Used by the chrome-less /axo/embed (framed into the Portal landing page) so
+  // visitors see an interactive assistant, not a static intro card. The
+  // standalone /axo page leaves this false and keeps the intro card.
+  const [opened, setOpened] = useState(autoOpen);
   const [merch, setMerch] = useState<MerchProduct[] | null>(null);
   const merchSectionRef = useRef<HTMLElement>(null);
   const visitorIdRef = useRef<string>("");
@@ -267,13 +271,15 @@ export default function AxoExperience() {
                 <span className="font-medium text-white">AXO</span>
                 <span className="text-xs text-white/40">· lightweight</span>
               </div>
-              <button
-                onClick={() => setOpened(false)}
-                className="text-white/40 hover:text-white transition"
-                aria-label="Close AXO"
-              >
-                <X size={18} />
-              </button>
+              {!autoOpen && (
+                <button
+                  onClick={() => setOpened(false)}
+                  className="text-white/40 hover:text-white transition"
+                  aria-label="Close AXO"
+                >
+                  <X size={18} />
+                </button>
+              )}
             </div>
             <div
               ref={scrollRef}
