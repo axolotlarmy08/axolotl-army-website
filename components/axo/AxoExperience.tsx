@@ -46,6 +46,25 @@ function getOrCreateVisitorId(): string {
   }
 }
 
+// Portal signup target. The preview-panel tier buttons mirror the Portal
+// landing page's pricing CTAs exactly: register-first, paid tiers preselect
+// the plan, Enterprise Pro books a call. target="_top" on the links means a
+// click inside the embedded /axo/embed iframe navigates the WHOLE page to
+// signup (not the little frame); on the standalone /axo page it's a normal nav.
+const PORTAL_BASE = "https://portal.axolotlarmy.net";
+function tierSignupCta(name: string): { label: string; href: string } {
+  if (name === "Enterprise Pro") {
+    return { label: "Join the waitlist", href: `${PORTAL_BASE}/book?from=axo` };
+  }
+  if (name === "Starter") {
+    return { label: "Start free", href: `${PORTAL_BASE}/register?from=axo` };
+  }
+  return {
+    label: `Start with ${name}`,
+    href: `${PORTAL_BASE}/register?from=axo&next=${encodeURIComponent(`/portal/plan?tier=${name}`)}`,
+  };
+}
+
 export default function AxoExperience({ autoOpen = false }: { autoOpen?: boolean }) {
   // autoOpen: skip the "Try AXO" intro card and show the live chat immediately.
   // Used by the chrome-less /axo/embed (framed into the Portal landing page) so
@@ -395,6 +414,22 @@ export default function AxoExperience({ autoOpen = false }: { autoOpen?: boolean
                         </div>
                       </div>
                       <div className="text-sm text-white/50 mt-1">{t.tagline}</div>
+                      {/* Signup CTA — same destination as the landing page's
+                          "Start with <plan>" buttons. stopPropagation so it
+                          doesn't toggle the card's expand state. */}
+                      {(() => {
+                        const cta = tierSignupCta(t.name);
+                        return (
+                          <a
+                            href={cta.href}
+                            target="_top"
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-white/90 transition"
+                          >
+                            {cta.label}
+                          </a>
+                        );
+                      })()}
                       {open && (
                         <div className="mt-3 space-y-2">
                           <div>
