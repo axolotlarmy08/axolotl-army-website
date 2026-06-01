@@ -52,6 +52,15 @@ function getOrCreateVisitorId(): string {
 // click inside the embedded /axo/embed iframe navigates the WHOLE page to
 // signup (not the little frame); on the standalone /axo page it's a normal nav.
 const PORTAL_BASE = "https://portal.axolotlarmy.net";
+// Per-plan accent colors — identical to the Portal landing page's pricing
+// cards so the AXO panel stays color-consistent with the top of the page.
+const TIER_ACCENTS: Record<string, string> = {
+  Starter: "#8b909b",
+  Pro: "#7eb8d4",
+  Premium: "#22d3ee",
+  Enterprise: "#e0c27e",
+  "Enterprise Pro": "#bca5e0",
+};
 function tierSignupCta(name: string): { label: string; href: string } {
   if (name === "Enterprise Pro") {
     return { label: "Join the waitlist", href: `${PORTAL_BASE}/book?from=axo` };
@@ -384,6 +393,7 @@ export default function AxoExperience({ autoOpen = false }: { autoOpen?: boolean
                   const open = isExpanded("tier", t.name);
                   const focused =
                     focus?.section === "tier" && focus.id === t.name;
+                  const accent = TIER_ACCENTS[t.name] ?? "#ffffff";
                   return (
                     <div
                       key={t.name}
@@ -391,16 +401,17 @@ export default function AxoExperience({ autoOpen = false }: { autoOpen?: boolean
                         tierRefs.current[t.name] = el;
                       }}
                       onClick={() => toggleClicked(`tier:${t.name}`)}
-                      className={`rounded-xl border p-3 transition cursor-pointer hover:border-white/30 ${
+                      style={{ borderColor: focused ? accent : `${accent}44` }}
+                      className={`rounded-xl border p-3 transition cursor-pointer ${
                         focused
-                          ? "border-white bg-white/[0.08] ring-2 ring-white/30"
+                          ? "bg-white/[0.08]"
                           : open
-                          ? "border-white/30 bg-white/[0.04]"
-                          : "border-white/10 bg-white/[0.02]"
+                          ? "bg-white/[0.04]"
+                          : "bg-white/[0.02] hover:bg-white/[0.05]"
                       }`}
                     >
                       <div className="flex items-baseline justify-between gap-3">
-                        <div className="font-medium text-white">{t.name}</div>
+                        <div className="font-medium" style={{ color: accent }}>{t.name}</div>
                         <div className="text-white/70 text-sm whitespace-nowrap">
                           {t.monthlyPrice === 0
                             ? "Free"
@@ -424,7 +435,8 @@ export default function AxoExperience({ autoOpen = false }: { autoOpen?: boolean
                             href={cta.href}
                             target="_top"
                             onClick={(e) => e.stopPropagation()}
-                            className="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-white/90 transition"
+                            style={{ backgroundColor: accent, color: "#06141a" }}
+                            className="mt-3 inline-flex w-full items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold transition hover:opacity-90"
                           >
                             {cta.label}
                           </a>
