@@ -27,6 +27,21 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Allow ONLY the Portal landing page (and this site) to frame the
+  // chrome-less /axo/embed AXO. Everything else stays unframable by default.
+  async headers() {
+    return [
+      {
+        source: "/axo/embed",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'self' https://portal.axolotlarmy.net",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
