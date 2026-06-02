@@ -299,10 +299,10 @@ export const AXO_CREDIT_PACKS: AxoCreditPack[] = [
     name: "Small Pack",
     price: 10,
     credits: 1000,
-    blurb: "≈ 5× 8-second videos OR 50 thumbnails.",
+    blurb: "≈ 2× 8-second videos OR 50 thumbnails.",
     details: [
       "$0.010 per credit (base rate)",
-      "≈ 5× 8-second videos",
+      "≈ 2× 8-second videos",
       "≈ 50 thumbnail generations",
       "No expiration on unused credits",
     ],
@@ -314,7 +314,7 @@ export const AXO_CREDIT_PACKS: AxoCreditPack[] = [
     blurb: "10% off base rate.",
     details: [
       "$0.009 per credit (10% off base rate)",
-      "≈ 25× 8-second videos",
+      "≈ 12× 8-second videos",
       "≈ 250 thumbnails",
       "Save $5 vs buying five Small Packs",
     ],
@@ -326,7 +326,7 @@ export const AXO_CREDIT_PACKS: AxoCreditPack[] = [
     blurb: "15% off base rate.",
     details: [
       "$0.0085 per credit (15% off base rate — biggest discount)",
-      "≈ 100× 8-second videos",
+      "≈ 51× 8-second videos",
       "≈ 1,000 thumbnails",
       "Save $30 vs buying twenty Small Packs",
     ],

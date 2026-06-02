@@ -17,7 +17,7 @@ const features = [
     icon: VideoCamera,
     title: "AI Video Generation",
     description:
-      "8-second, 30-second, and 60-second videos powered by Runway Gen-4 and Google Veo3.",
+      "8-second, 30-second, and 60-second videos powered by Runway Gen-4.5 and Google Veo3.",
     span: "md:col-span-2",
   },
   {
@@ -59,7 +59,7 @@ const features = [
     icon: CurrencyDollar,
     title: "Pay Per Video",
     description:
-      "Credit-based pricing starting at $4 per video. No subscriptions required to get started.",
+      "Credit-based pricing starting at $3.88 per video. No subscriptions required to get started.",
     span: "",
   },
   {

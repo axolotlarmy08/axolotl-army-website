@@ -10,7 +10,7 @@ const highlights = [
     icon: VideoCamera,
     title: "AI Video Generation",
     description:
-      "8-second, 30-second, and 60-second videos — Runway Gen-4 and Google Veo3 under the hood.",
+      "8-second, 30-second, and 60-second videos — Runway Gen-4.5 and Google Veo3 under the hood.",
   },
   {
     icon: Robot,

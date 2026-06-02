@@ -41,7 +41,7 @@ const cards: FormatCard[] = [
     label: "Short-form",
     title: "Social clips built for the scroll",
     description:
-      "Vertical 8s – 30s videos for TikTok, Instagram Reels, and YouTube Shorts. Hooks written by the Scriptwriter agent, generated in Runway Gen-4, QA'd by the Creative Director.",
+      "Vertical 8s – 30s videos for TikTok, Instagram Reels, and YouTube Shorts. Hooks written by the Scriptwriter agent, generated in Runway Gen-4.5, QA'd by the Creative Director.",
     href: "/showreel",
     gradient:
       "linear-gradient(135deg, color-mix(in oklab, var(--axo-pink) 45%, transparent) 0%, color-mix(in oklab, var(--axo-gold) 25%, transparent) 60%, transparent 100%)",
