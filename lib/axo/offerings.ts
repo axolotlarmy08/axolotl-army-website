@@ -93,7 +93,7 @@ export const AXO_TIERS: AxoTier[] = [
       "Content Briefs (AI-powered topic + hook recommendations)",
       "Outbound invoicing (bill your own customers from the portal)",
       "Per-video revenue attribution",
-      "$20/mo of included credits",
+      "2,000 credits/mo included (a $20 value, separate from the $43 price)",
     ],
     notIncluded: [
       "AXY business assistant (Premium+ OR AXY Assistant Add-on $49/mo)",
@@ -119,7 +119,7 @@ export const AXO_TIERS: AxoTier[] = [
       "Slideshow Maker",
       "Auto-Repurpose: one video → up to 12 platform-tailored clips across 9 platforms",
       "Performance Insights (closed-loop — wins feed back into new generations)",
-      "$100/mo of included credits",
+      "10,000 credits/mo included (a $100 value, separate from the $199 price)",
     ],
     notIncluded: [
       "Lead Generator agent (Enterprise+)",
@@ -139,7 +139,7 @@ export const AXO_TIERS: AxoTier[] = [
       "Lead Generator agent — 100 quality decision-maker leads/week (~430/month)",
       "Full outreach engine — templates, scheduled sequences, A/B testing, reply detection, bounce handling, deliverability dashboard, DNS setup wizard, mailbox warmup",
       "~350 AXY Voice replies / month included (up from ~140 on Premium)",
-      "$300/mo of included credits",
+      "30,000 credits/mo included (a $300 value, separate from the $499 price)",
     ],
     notIncluded: [
       "Website AXY embed (Enterprise Pro)",
@@ -164,7 +164,7 @@ export const AXO_TIERS: AxoTier[] = [
       "Custom workflows + priority support",
       "~1,400 AXY Voice replies / month included (1,000,000 character units)",
       "$50/day document-analysis ceiling (up from $3/day on Premium and $5/day on Enterprise)",
-      "$2,500/mo of included credits",
+      "250,000 credits/mo included (a $2,500 value, separate from the $5,000 price)",
     ],
   },
 ];
@@ -238,7 +238,7 @@ export const AXO_ADDONS: AxoAddon[] = [
   },
   {
     name: "Lead Finder",
-    monthlyPrice: 49,
+    monthlyPrice: 79,
     blurb:
       "10 quality decision-maker leads/week. Includes Gmail/Outlook OAuth.",
     details: [
@@ -374,7 +374,9 @@ export const AXO_VOICE_TOPUPS: AxoVoiceTopUp[] = [
 export function offeringsForPrompt(): string {
   const tiers = AXO_TIERS.map((t) => {
     const head = `- ${t.name} ($${t.monthlyPrice}/mo${
-      t.creditsUsd ? `, includes $${t.creditsUsd}/mo credits` : ""
+      t.creditsUsd
+        ? `, includes ${(t.creditsUsd * 100).toLocaleString()} credits/mo — a $${t.creditsUsd} value, NOT the price`
+        : ", pay-per-credit (no included credits)"
     }) — ${t.tagline}`;
     const incl = `  INCLUDED:\n   • ${t.highlights.join("\n   • ")}`;
     const excl = t.notIncluded?.length
