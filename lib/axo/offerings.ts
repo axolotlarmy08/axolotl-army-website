@@ -136,7 +136,7 @@ export const AXO_TIERS: AxoTier[] = [
     tagline: "For businesses that need full automation + lead gen.",
     highlights: [
       "Everything in Premium",
-      "Lead Generator agent — 100 quality decision-maker leads/week (~430/month)",
+      "Lead Generator agent — 100 quality decision-maker leads/week (up to 400/month)",
       "Full outreach engine — templates, scheduled sequences, A/B testing, reply detection, bounce handling, deliverability dashboard, DNS setup wizard, mailbox warmup",
       "~350 AXY Voice replies / month included (up from ~140 on Premium)",
       "30,000 credits/mo included (a $300 value, separate from the $499 price)",
